@@ -65,7 +65,8 @@ import 'package:PiliNext/pages/setting/privacy_setting.dart';
 import 'package:PiliNext/pages/setting/recommend_setting.dart';
 import 'package:PiliNext/pages/setting/style_setting.dart';
 import 'package:PiliNext/pages/setting/video_setting.dart';
-import 'package:PiliNext/pages/setting/view.dart';
+import 'package:PiliNext/pages/setting/simplified_view.dart';
+import 'package:PiliNext/pages/setting/view.dart' as old_setting;
 import 'package:PiliNext/pages/settings_search/view.dart';
 import 'package:PiliNext/pages/space_setting/view.dart';
 import 'package:PiliNext/pages/sponsor_block/view.dart';
@@ -90,7 +91,7 @@ class Routes {
     //
     GetPage(name: '/webview', page: () => const WebviewPage()),
     // 设置
-    GetPage(name: '/setting', page: () => const SettingPage()),
+    GetPage(name: '/setting', page: () => const SimplifiedSettingsPage()),
     //
     GetPage(name: '/fav', page: () => const FavPage()),
     //
