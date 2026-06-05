@@ -1,6 +1,7 @@
 import 'package:PiliNext/models/common/enum_with_label.dart';
 import 'package:PiliNext/pages/dynamics/view.dart';
 import 'package:PiliNext/pages/home/view.dart';
+import 'package:PiliNext/pages/messages/view.dart';
 import 'package:PiliNext/pages/mine/view.dart';
 import 'package:flutter/material.dart';
 
@@ -16,6 +17,12 @@ enum NavigationBarType implements EnumWithLabel {
     Icon(Icons.motion_photos_on_outlined, size: 21),
     Icon(Icons.motion_photos_on, size: 21),
     DynamicsPage(),
+  ),
+  messages(
+    '消息',
+    Icon(Icons.mail_outline, size: 24),
+    Icon(Icons.mail, size: 24),
+    MessagesPage(),
   ),
   mine(
     '我的',

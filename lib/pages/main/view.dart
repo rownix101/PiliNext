@@ -2,21 +2,17 @@ import 'dart:io';
 
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/constants.dart';
-import 'package:PiliNext/common/style.dart';
-import 'package:PiliNext/common/widgets/floating_navigation_bar.dart';
+import 'package:PiliNext/common/widgets/glass_navigation_bar.dart';
 import 'package:PiliNext/common/widgets/flutter/pop_scope.dart';
 import 'package:PiliNext/common/widgets/flutter/tabs.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
 import 'package:PiliNext/common/widgets/route_aware_mixin.dart';
 import 'package:PiliNext/models/common/nav_bar_config.dart';
-import 'package:PiliNext/pages/home/view.dart';
 import 'package:PiliNext/pages/main/controller.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
 import 'package:PiliNext/plugin/pl_player/models/play_status.dart';
 import 'package:PiliNext/utils/android/android_helper.dart';
 import 'package:PiliNext/utils/app_scheme.dart';
-import 'package:PiliNext/utils/extension/context_ext.dart';
-import 'package:PiliNext/utils/extension/size_ext.dart';
 import 'package:PiliNext/utils/extension/theme_ext.dart';
 import 'package:PiliNext/utils/mobile_observer.dart';
 import 'package:PiliNext/utils/platform_utils.dart';
@@ -80,9 +76,7 @@ class _MainAppState extends PopScopeState<MainApp>
     if (PlatformUtils.isDesktop) {
       windowManager.setBrightness(brightness);
     }
-    if (!_mainController.useSideBar) {
-      _mainController.useBottomNav = MediaQuery.sizeOf(context).isPortrait;
-    }
+    // PiliNext: always use bottom navigation, all orientations.
   }
 
   @override
@@ -279,156 +273,37 @@ class _MainAppState extends PopScopeState<MainApp>
   }
 
   Widget? get _bottomNav {
-    Widget? bottomNav;
-    if (_mainController.navigationBars.length > 1) {
-      if (_mainController.floatingNavBar) {
-        bottomNav = Obx(
-          () => FloatingNavigationBar(
-            onDestinationSelected: _mainController.setIndex,
-            selectedIndex: _mainController.selectedIndex.value,
-            destinations: _mainController.navigationBars
-                .map(
-                  (e) => FloatingNavigationDestination(
-                    label: e.label,
-                    icon: _buildIcon(type: e),
-                    selectedIcon: _buildIcon(type: e, selected: true),
-                  ),
-                )
-                .toList(),
-          ),
-        );
-      } else if (_mainController.enableMYBar) {
-        bottomNav = Obx(
-          () => NavigationBar(
-            maintainBottomViewPadding: true,
-            onDestinationSelected: _mainController.setIndex,
-            selectedIndex: _mainController.selectedIndex.value,
-            destinations: _mainController.navigationBars
-                .map(
-                  (e) => NavigationDestination(
-                    label: e.label,
-                    icon: _buildIcon(type: e),
-                    selectedIcon: _buildIcon(type: e, selected: true),
-                  ),
-                )
-                .toList(),
-          ),
-        );
-      } else {
-        bottomNav = Obx(
-          () => BottomNavigationBar(
-            currentIndex: _mainController.selectedIndex.value,
-            onTap: _mainController.setIndex,
-            iconSize: 16,
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            type: .fixed,
-            items: _mainController.navigationBars
-                .map(
-                  (e) => BottomNavigationBarItem(
-                    label: e.label,
-                    icon: _buildIcon(type: e),
-                    activeIcon: _buildIcon(type: e, selected: true),
-                  ),
-                )
-                .toList(),
-          ),
-        );
-      }
+    if (_mainController.navigationBars.length <= 1) return null;
 
-      if (_mainController.hideBottomBar) {
-        if (_mainController.barOffset case final barOffset?) {
-          return Obx(
-            () => FractionalTranslation(
-              translation: Offset(
-                0.0,
-                barOffset.value / Style.topBarHeight,
+    return Obx(
+      () => GlassNavigationBar(
+        selectedIndex: _mainController.selectedIndex.value,
+        destinations: _mainController.navigationBars
+            .map(
+              (e) => GlassNavigationDestination(
+                label: e.label,
+                icon: _buildIcon(type: e),
+                selectedIcon: _buildIcon(type: e, selected: true),
+                badge: _badgeForType(e),
               ),
-              child: bottomNav,
-            ),
-          );
-        }
-        if (_mainController.showBottomBar case final showBottomBar?) {
-          return Obx(
-            () => AnimatedSlide(
-              curve: Curves.easeInOutCubicEmphasized,
-              duration: const Duration(milliseconds: 500),
-              offset: Offset(0, showBottomBar.value ? 0 : 1),
-              child: bottomNav,
-            ),
-          );
-        }
-      }
-    }
-
-    return bottomNav;
+            )
+            .toList(),
+        onDestinationSelected: _mainController.setIndex,
+        visible: _mainController.showBottomBar?.value ?? true,
+      ),
+    );
   }
 
-  Widget _sideBar(ThemeData theme) {
-    return _mainController.navigationBars.length > 1
-        ? context.isTablet && _mainController.optTabletNav
-              ? Column(
-                  children: [
-                    const SizedBox(height: 25),
-                    userAndSearchVertical(theme),
-                    const Spacer(flex: 2),
-                    Expanded(
-                      flex: 5,
-                      child: SizedBox(
-                        width: 130,
-                        child: Obx(
-                          () => NavigationDrawer(
-                            backgroundColor: Colors.transparent,
-                            tilePadding: const .symmetric(
-                              vertical: 5,
-                              horizontal: 12,
-                            ),
-                            indicatorShape: const RoundedRectangleBorder(
-                              borderRadius: .all(.circular(16)),
-                            ),
-                            onDestinationSelected: _mainController.setIndex,
-                            selectedIndex: _mainController.selectedIndex.value,
-                            children: _mainController.navigationBars
-                                .map(
-                                  (e) => NavigationDrawerDestination(
-                                    label: Text(e.label),
-                                    icon: _buildIcon(type: e),
-                                    selectedIcon: _buildIcon(
-                                      type: e,
-                                      selected: true,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Obx(
-                  () => NavigationRail(
-                    groupAlignment: 0.5,
-                    selectedIndex: _mainController.selectedIndex.value,
-                    onDestinationSelected: _mainController.setIndex,
-                    labelType: .selected,
-                    leading: userAndSearchVertical(theme),
-                    destinations: _mainController.navigationBars
-                        .map(
-                          (e) => NavigationRailDestination(
-                            label: Text(e.label),
-                            icon: _buildIcon(type: e),
-                            selectedIcon: _buildIcon(type: e, selected: true),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                )
-        : Container(
-            width: 80,
-            padding: const .only(top: 10),
-            child: userAndSearchVertical(theme),
-          );
+  Widget? _badgeForType(NavigationBarType type) {
+    if (type == NavigationBarType.dynamics) {
+      return Obx(
+        () {
+          final count = _mainController.dynCount.value;
+          return count > 0 ? Text(count.toString()) : const SizedBox.shrink();
+        },
+      );
+    }
+    return null;
   }
 
   @override
@@ -436,7 +311,7 @@ class _MainAppState extends PopScopeState<MainApp>
     Widget child;
     if (_mainController.mainTabBarView) {
       child = CustomTabBarView(
-        scrollDirection: _mainController.useBottomNav ? .horizontal : .vertical,
+        scrollDirection: Axis.horizontal, // always horizontal — bottom nav
         physics: const NeverScrollableScrollPhysics(),
         controller: _mainController.controller,
         children: _mainController.navigationBars.map((i) => i.page).toList(),
@@ -449,23 +324,9 @@ class _MainAppState extends PopScopeState<MainApp>
       );
     }
 
-    Widget? bottomNav;
-    if (_mainController.useBottomNav) {
-      bottomNav = _bottomNav;
-      child = Row(children: [Expanded(child: child)]);
-    } else {
-      child = Row(
-        children: [
-          _sideBar(theme),
-          VerticalDivider(
-            width: 1,
-            endIndent: _padding.bottom,
-            color: theme.colorScheme.outline.withValues(alpha: 0.06),
-          ),
-          Expanded(child: child),
-        ],
-      );
-    }
+    // PiliNext: always bottom navigation, all devices.
+    // Desktop users can optionally switch to left pill in settings.
+    final bottomNav = _bottomNav;
 
     child = Scaffold(
       extendBody: true,
@@ -473,7 +334,7 @@ class _MainAppState extends PopScopeState<MainApp>
       appBar: AppBar(toolbarHeight: 0),
       body: Padding(
         padding: EdgeInsets.only(
-          left: _mainController.useBottomNav ? _padding.left : 0.0,
+          left: _padding.left,
           right: _padding.right,
         ),
         child: child,
@@ -513,21 +374,4 @@ class _MainAppState extends PopScopeState<MainApp>
         : icon;
   }
 
-  Widget userAndSearchVertical(ThemeData theme) {
-    return Column(
-      children: [
-        userAvatar(theme: theme, mainController: _mainController),
-        const SizedBox(height: 8),
-        msgBadge(_mainController),
-        IconButton(
-          tooltip: '搜索',
-          icon: const Icon(
-            Icons.search_outlined,
-            semanticLabel: '搜索',
-          ),
-          onPressed: () => Get.toNamed('/search'),
-        ),
-      ],
-    );
-  }
 }

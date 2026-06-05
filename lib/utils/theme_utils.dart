@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/design/colors.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/utils/extension/theme_ext.dart';
 import 'package:PiliNext/utils/storage_pref.dart';
@@ -26,9 +27,13 @@ abstract final class ThemeUtils {
   static String themeUrl(bool isDark) =>
       'native.theme=${isDark ? 2 : 1}&night=${isDark ? 1 : 0}';
 
+  /// Build a [ThemeData] from the PiliNext fixed color palette.
+  ///
+  /// No longer uses Material You dynamic colors — the palette is
+  /// hand-crafted for desaturated, high-end aesthetics.
   static ThemeData getThemeData({
     required ColorScheme colorScheme,
-    required bool isDynamic,
+    bool isDynamic = false, // kept for API compat; ignored in new design
     bool isDark = false,
   }) {
     final appFontWeight = Pref.appFontWeight.clamp(
@@ -39,9 +44,11 @@ abstract final class ThemeUtils {
         ? null
         : FontWeight.values[appFontWeight];
     late final textStyle = TextStyle(fontWeight: fontWeight);
+
     ThemeData themeData = ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
+      scaffoldBackgroundColor: colorScheme.surface,
       textTheme: fontWeight == null
           ? null
           : TextTheme(
@@ -76,9 +83,6 @@ abstract final class ThemeUtils {
           fontWeight: fontWeight,
         ),
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        surfaceTintColor: isDynamic ? colorScheme.onSurfaceVariant : null,
-      ),
       snackBarTheme: SnackBarThemeData(
         actionTextColor: colorScheme.primary,
         backgroundColor: colorScheme.secondaryContainer,
@@ -92,11 +96,7 @@ abstract final class ThemeUtils {
       cardTheme: CardThemeData(
         elevation: 1,
         margin: EdgeInsets.zero,
-        surfaceTintColor: isDynamic
-            ? colorScheme.onSurfaceVariant
-            : isDark
-            ? colorScheme.onSurfaceVariant
-            : null,
+        surfaceTintColor: null,
         shadowColor: Colors.transparent,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
@@ -150,14 +150,16 @@ abstract final class ThemeUtils {
         },
       ),
     );
-    if (isDark) {
-      if (Pref.isPureBlackTheme) {
-        themeData = darkenTheme(themeData);
-      }
+
+    if (isDark && Pref.isPureBlackTheme) {
+      themeData = darkenTheme(themeData);
     }
+
     return themeData;
   }
 
+  /// Apply pure-black darkening to a theme.
+  /// Preserved for users who prefer #000000 background.
   static ThemeData darkenTheme(ThemeData themeData) {
     final colorScheme = themeData.colorScheme;
     final color = colorScheme.surfaceContainerHighest.darken(0.7);
@@ -174,15 +176,6 @@ abstract final class ThemeUtils {
       ),
       bottomSheetTheme: themeData.bottomSheetTheme.copyWith(
         backgroundColor: color,
-      ),
-      bottomNavigationBarTheme: themeData.bottomNavigationBarTheme.copyWith(
-        backgroundColor: color,
-      ),
-      navigationBarTheme: themeData.navigationBarTheme.copyWith(
-        backgroundColor: color,
-      ),
-      navigationRailTheme: themeData.navigationRailTheme.copyWith(
-        backgroundColor: Colors.black,
       ),
       colorScheme: colorScheme.copyWith(
         primary: colorScheme.primary.darken(0.1),
@@ -202,9 +195,7 @@ abstract final class ThemeUtils {
         onInverseSurface: colorScheme.onInverseSurface.darken(),
         surfaceContainer: colorScheme.surfaceContainer.darken(),
         surfaceContainerHigh: colorScheme.surfaceContainerHigh.darken(),
-        surfaceContainerHighest: colorScheme.surfaceContainerHighest.darken(
-          0.4,
-        ),
+        surfaceContainerHighest: colorScheme.surfaceContainerHighest.darken(0.4),
       ),
     );
   }

@@ -2,13 +2,14 @@ import 'dart:io';
 
 import 'package:PiliNext/build_config.dart';
 import 'package:PiliNext/common/constants.dart';
+import 'package:PiliNext/common/design/colors.dart';
 import 'package:PiliNext/common/widgets/back_detector.dart';
 import 'package:PiliNext/common/widgets/custom_toast.dart';
 import 'package:PiliNext/common/widgets/route_aware_mixin.dart';
 import 'package:PiliNext/common/widgets/scale_app.dart';
 import 'package:PiliNext/common/widgets/scroll_behavior.dart';
 import 'package:PiliNext/http/init.dart';
-import 'package:PiliNext/models/common/theme/theme_color_type.dart';
+
 import 'package:PiliNext/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliNext/router/app_pages.dart';
 import 'package:PiliNext/services/account_service.dart';
@@ -18,7 +19,7 @@ import 'package:PiliNext/services/service_locator.dart';
 import 'package:PiliNext/utils/cache_manager.dart';
 import 'package:PiliNext/utils/calc_window_position.dart';
 import 'package:PiliNext/utils/date_utils.dart';
-import 'package:PiliNext/utils/extension/theme_ext.dart';
+
 import 'package:PiliNext/utils/json_file_handler.dart';
 import 'package:PiliNext/utils/max_screen_size.dart';
 import 'package:PiliNext/utils/path_utils.dart';
@@ -31,7 +32,7 @@ import 'package:PiliNext/utils/theme_utils.dart';
 import 'package:PiliNext/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:collection/collection.dart';
-import 'package:dynamic_color/dynamic_color.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -184,9 +185,9 @@ void main() async {
     });
   }
 
-  if (Pref.dynamicColor) {
-    await MyApp.initPlatformState();
-  }
+  // PiliNext uses a fixed, hand-crafted color palette.
+  // Material You dynamic colors (Monet) are too saturated for our design.
+  // The old dynamic_color init has been removed.
 
   if (Pref.enableLog) {
     // 异常捕获 logo记录
@@ -215,8 +216,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static ColorScheme? _light, _dark;
-
   static void _onBack() {
     if (SmartDialog.checkExist()) {
       SmartDialog.dismiss();
@@ -238,22 +237,15 @@ class MyApp extends StatelessWidget {
   }
 
   static (ThemeData, ThemeData) getAllTheme() {
-    final dynamicColor = _light != null && _dark != null && Pref.dynamicColor;
-    late final brandColor = colorThemeTypes[Pref.customColor].color;
-    late final variant = Pref.schemeVariant;
+    // Use PiliNext's fixed desaturated color palette.
+    // Material You dynamic colors are too saturated for our design language.
     return (
       ThemeUtils.lightTheme = ThemeUtils.getThemeData(
-        colorScheme: dynamicColor
-            ? _light!
-            : brandColor.asColorSchemeSeed(variant, .light),
-        isDynamic: dynamicColor,
+        colorScheme: AppColors.lightColorScheme(),
       ),
       ThemeUtils.darkTheme = ThemeUtils.getThemeData(
         isDark: true,
-        colorScheme: dynamicColor
-            ? _dark!
-            : brandColor.asColorSchemeSeed(variant, .dark),
-        isDynamic: dynamicColor,
+        colorScheme: AppColors.darkColorScheme(),
       ),
     );
   }
@@ -327,50 +319,6 @@ class MyApp extends StatelessWidget {
     return child;
   }
 
-  /// from [DynamicColorBuilderState.initPlatformState]
-  static Future<bool> initPlatformState() async {
-    if (_light != null || _dark != null) return true;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      final corePalette = await DynamicColorPlugin.getCorePalette();
-
-      if (corePalette != null) {
-        if (kDebugMode) {
-          debugPrint('dynamic_color: Core palette detected.');
-        }
-        _light = corePalette.toColorScheme();
-        _dark = corePalette.toColorScheme(brightness: Brightness.dark);
-        return true;
-      }
-    } on PlatformException {
-      if (kDebugMode) {
-        debugPrint('dynamic_color: Failed to obtain core palette.');
-      }
-    }
-
-    try {
-      final Color? accentColor = await DynamicColorPlugin.getAccentColor();
-
-      if (accentColor != null) {
-        if (kDebugMode) {
-          debugPrint('dynamic_color: Accent color detected.');
-        }
-        final variant = Pref.schemeVariant;
-        _light = accentColor.asColorSchemeSeed(variant, .light);
-        _dark = accentColor.asColorSchemeSeed(variant, .dark);
-        return true;
-      }
-    } on PlatformException {
-      if (kDebugMode) {
-        debugPrint('dynamic_color: Failed to obtain accent color.');
-      }
-    }
-    if (kDebugMode) {
-      debugPrint('dynamic_color: Dynamic color not detected on this device.');
-    }
-    GStorage.setting.put(SettingBoxKey.dynamicColor, false);
-    return false;
-  }
 }
 
 class _CustomHttpOverrides extends HttpOverrides {
