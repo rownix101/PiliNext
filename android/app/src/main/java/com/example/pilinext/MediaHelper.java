@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.piliplus;
+package com.example.pilinext;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;

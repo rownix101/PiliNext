@@ -1,9 +1,9 @@
-import 'package:PiliPlus/common/style.dart';
-import 'package:PiliPlus/common/widgets/image/image_save.dart';
-import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
-import 'package:PiliPlus/models_new/space/space_fav/list.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:PiliPlus/utils/utils.dart';
+import 'package:PiliNext/common/style.dart';
+import 'package:PiliNext/common/widgets/image/image_save.dart';
+import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
+import 'package:PiliNext/models_new/space/space_fav/list.dart';
+import 'package:PiliNext/utils/platform_utils.dart';
+import 'package:PiliNext/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

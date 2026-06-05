@@ -1,13 +1,13 @@
-import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
-import 'package:PiliPlus/common/widgets/view_safe_area.dart';
-import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/models/common/member/contribute_type.dart';
-import 'package:PiliPlus/models_new/space/space_season_series/season.dart'
+import 'package:PiliNext/common/widgets/loading_widget/http_error.dart';
+import 'package:PiliNext/common/widgets/view_safe_area.dart';
+import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/models/common/member/contribute_type.dart';
+import 'package:PiliNext/models_new/space/space_season_series/season.dart'
     show SpaceSsModel;
-import 'package:PiliPlus/pages/member_season_series/controller.dart';
-import 'package:PiliPlus/pages/member_season_series/widget/season_series_card.dart';
-import 'package:PiliPlus/pages/member_video/view.dart';
-import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliNext/pages/member_season_series/controller.dart';
+import 'package:PiliNext/pages/member_season_series/widget/season_series_card.dart';
+import 'package:PiliNext/pages/member_video/view.dart';
+import 'package:PiliNext/utils/grid.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

@@ -1,10 +1,10 @@
-import 'package:PiliPlus/http/fav.dart';
-import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/http/user.dart';
-import 'package:PiliPlus/models_new/sub/sub/data.dart';
-import 'package:PiliPlus/models_new/sub/sub/list.dart';
-import 'package:PiliPlus/pages/common/common_list_controller.dart';
-import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliNext/http/fav.dart';
+import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/http/user.dart';
+import 'package:PiliNext/models_new/sub/sub/data.dart';
+import 'package:PiliNext/models_new/sub/sub/list.dart';
+import 'package:PiliNext/pages/common/common_list_controller.dart';
+import 'package:PiliNext/utils/accounts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';

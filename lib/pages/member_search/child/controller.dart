@@ -1,12 +1,12 @@
-import 'package:PiliPlus/grpc/bilibili/app/interfaces/v1.pb.dart'
+import 'package:PiliNext/grpc/bilibili/app/interfaces/v1.pb.dart'
     show SearchArchiveReply;
-import 'package:PiliPlus/grpc/space.dart';
-import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/http/member.dart';
-import 'package:PiliPlus/models/common/member/search_type.dart';
-import 'package:PiliPlus/models/dynamics/result.dart';
-import 'package:PiliPlus/pages/common/common_list_controller.dart';
-import 'package:PiliPlus/pages/member_search/controller.dart';
+import 'package:PiliNext/grpc/space.dart';
+import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/http/member.dart';
+import 'package:PiliNext/models/common/member/search_type.dart';
+import 'package:PiliNext/models/dynamics/result.dart';
+import 'package:PiliNext/pages/common/common_list_controller.dart';
+import 'package:PiliNext/pages/member_search/controller.dart';
 import 'package:fixnum/fixnum.dart' show Int64;
 
 class MemberSearchChildController extends CommonListController {

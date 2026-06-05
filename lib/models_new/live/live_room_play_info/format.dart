@@ -1,4 +1,4 @@
-import 'package:PiliPlus/models_new/live/live_room_play_info/codec.dart';
+import 'package:PiliNext/models_new/live/live_room_play_info/codec.dart';
 
 class Format {
   List<CodecItem>? codec;

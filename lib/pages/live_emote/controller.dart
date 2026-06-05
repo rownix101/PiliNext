@@ -1,7 +1,7 @@
-import 'package:PiliPlus/http/live.dart';
-import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/models_new/live/live_emote/datum.dart';
-import 'package:PiliPlus/pages/common/common_list_controller.dart';
+import 'package:PiliNext/http/live.dart';
+import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/models_new/live/live_emote/datum.dart';
+import 'package:PiliNext/pages/common/common_list_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

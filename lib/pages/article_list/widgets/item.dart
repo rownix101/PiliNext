@@ -1,8 +1,8 @@
-import 'package:PiliPlus/common/style.dart';
-import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
-import 'package:PiliPlus/common/widgets/stat/stat.dart';
-import 'package:PiliPlus/models/common/stat_type.dart';
-import 'package:PiliPlus/models_new/article/article_list/article.dart';
+import 'package:PiliNext/common/style.dart';
+import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
+import 'package:PiliNext/common/widgets/stat/stat.dart';
+import 'package:PiliNext/models/common/stat_type.dart';
+import 'package:PiliNext/models_new/article/article_list/article.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

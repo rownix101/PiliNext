@@ -8,20 +8,20 @@ $NewOverScrollIndicator = "362b1de29974ffc1ed6faa826e1df870d7bec75f";
 
 $BottomSheetAndroidPatch = "lib/scripts/bottom_sheet_android.patch"
 
-# https://github.com/bggRGjQaUbCoE/PiliPlus/issues/1906
+# https://github.com/bggRGjQaUbCoE/PiliNext/issues/1906
 $BottomSheetIOSFlutterPatch = "lib/scripts/bottom_sheet_ios_flutter.patch"
-$BottomSheetIOSPiliPlusPatch = "lib/scripts/bottom_sheet_ios_piliplus.patch"
+$BottomSheetIOSPiliNextPatch = "lib/scripts/bottom_sheet_ios_pilinext.patch"
 
-# https://github.com/bggRGjQaUbCoE/PiliPlus/issues/1662
+# https://github.com/bggRGjQaUbCoE/PiliNext/issues/1662
 $ScrollViewPatch = "lib/scripts/scroll_view.patch"
 
-# https://github.com/bggRGjQaUbCoE/PiliPlus/issues/2106
+# https://github.com/bggRGjQaUbCoE/PiliNext/issues/2106
 $TextSelectionPatch = "lib/scripts/text_selection.patch"
 
-# https://github.com/bggRGjQaUbCoE/PiliPlus/issues/1947
+# https://github.com/bggRGjQaUbCoE/PiliNext/issues/1947
 $NavigatorPatch = "lib/scripts/navigator.patch"
 
-# https://github.com/bggRGjQaUbCoE/PiliPlus/issues/2107
+# https://github.com/bggRGjQaUbCoE/PiliNext/issues/2107
 $ImageAnimPatch = "lib/scripts/image_anim.patch"
 
 $LayoutBuilderPatch = "lib/scripts/layout_builder.patch"
@@ -35,9 +35,9 @@ $ModalBarrierPatch = "lib/scripts/modal_barrier.patch"
 $MouseCursorPatch = "lib/scripts/mouse_cursor.patch"
 
 if ($platform.ToLower() -eq "ios") {
-    git apply $BottomSheetIOSPiliPlusPatch
+    git apply $BottomSheetIOSPiliNextPatch
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "$BottomSheetIOSPiliPlusPatch applied"
+        Write-Host "$BottomSheetIOSPiliNextPatch applied"
     }
 }
 

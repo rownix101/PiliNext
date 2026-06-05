@@ -1,6 +1,6 @@
-import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
-import 'package:PiliPlus/models/common/enum_with_label.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
+import 'package:PiliNext/common/widgets/flutter/list_tile.dart';
+import 'package:PiliNext/models/common/enum_with_label.dart';
+import 'package:PiliNext/utils/platform_utils.dart';
 import 'package:flutter/material.dart' hide ListTile;
 
 typedef PopupMenuItemSelected<T> =

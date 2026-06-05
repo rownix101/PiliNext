@@ -1,5 +1,5 @@
-import 'package:PiliPlus/models_new/search/search_rcmd/data.dart';
-import 'package:PiliPlus/models_new/search/search_trending/list.dart';
+import 'package:PiliNext/models_new/search/search_rcmd/data.dart';
+import 'package:PiliNext/models_new/search/search_trending/list.dart';
 
 class SearchTrendingData extends SearchRcmdData {
   List<SearchTrendingItemModel>? topList;

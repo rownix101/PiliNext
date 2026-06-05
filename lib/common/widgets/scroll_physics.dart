@@ -1,6 +1,6 @@
-import 'package:PiliPlus/common/widgets/flutter/page/tabs.dart';
-import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliNext/common/widgets/flutter/page/tabs.dart';
+import 'package:PiliNext/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart';
+import 'package:PiliNext/utils/storage_pref.dart';
 import 'package:flutter/material.dart' hide TabBarView;
 
 Widget tabBarView({

@@ -1,8 +1,8 @@
-import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
-import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
-import 'package:PiliPlus/utils/storage.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliNext/common/widgets/dialog/dialog.dart';
+import 'package:PiliNext/common/widgets/flutter/list_tile.dart';
+import 'package:PiliNext/utils/storage.dart';
+import 'package:PiliNext/utils/storage_key.dart';
+import 'package:PiliNext/utils/storage_pref.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 

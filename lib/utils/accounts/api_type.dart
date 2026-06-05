@@ -1,5 +1,5 @@
-import 'package:PiliPlus/http/api.dart';
-import 'package:PiliPlus/models/common/account_type.dart';
+import 'package:PiliNext/http/api.dart';
+import 'package:PiliNext/models/common/account_type.dart';
 
 abstract final class ApiType {
   // TODO: grpc api type

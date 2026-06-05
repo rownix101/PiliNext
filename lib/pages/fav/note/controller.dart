@@ -1,7 +1,7 @@
-import 'package:PiliPlus/http/fav.dart';
-import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/models_new/fav/fav_note/list.dart';
-import 'package:PiliPlus/pages/common/multi_select/multi_select_controller.dart';
+import 'package:PiliNext/http/fav.dart';
+import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/models_new/fav/fav_note/list.dart';
+import 'package:PiliNext/pages/common/multi_select/multi_select_controller.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 

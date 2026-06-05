@@ -1,46 +1,46 @@
 import 'dart:io';
 import 'dart:math' show max;
 
-import 'package:PiliPlus/common/widgets/custom_icon.dart';
-import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
-import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart'
+import 'package:PiliNext/common/widgets/custom_icon.dart';
+import 'package:PiliNext/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliNext/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart'
     show deviceTouchSlop, touchSlopH;
-import 'package:PiliPlus/common/widgets/image_grid/image_grid_view.dart'
+import 'package:PiliNext/common/widgets/image_grid/image_grid_view.dart'
     show ImageGridView, ImageModel;
-import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
-import 'package:PiliPlus/grpc/reply.dart';
-import 'package:PiliPlus/http/fav.dart';
-import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/models/common/audio_normalization.dart';
-import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
-import 'package:PiliPlus/models/common/member/tab_type.dart';
-import 'package:PiliPlus/models/common/reply/reply_sort_type.dart';
-import 'package:PiliPlus/models/common/sponsor_block/skip_type.dart';
-import 'package:PiliPlus/models/common/super_resolution_type.dart';
-import 'package:PiliPlus/models/dynamics/result.dart'
+import 'package:PiliNext/common/widgets/pendant_avatar.dart';
+import 'package:PiliNext/grpc/reply.dart';
+import 'package:PiliNext/http/fav.dart';
+import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/models/common/audio_normalization.dart';
+import 'package:PiliNext/models/common/dynamic/dynamics_type.dart';
+import 'package:PiliNext/models/common/member/tab_type.dart';
+import 'package:PiliNext/models/common/reply/reply_sort_type.dart';
+import 'package:PiliNext/models/common/sponsor_block/skip_type.dart';
+import 'package:PiliNext/models/common/super_resolution_type.dart';
+import 'package:PiliNext/models/dynamics/result.dart'
     show DynamicsDataModel, ItemModulesModel;
-import 'package:PiliPlus/pages/common/slide/common_slide_page.dart';
-import 'package:PiliPlus/pages/home/controller.dart';
-import 'package:PiliPlus/pages/main/controller.dart';
-import 'package:PiliPlus/pages/setting/models/model.dart';
-import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
-import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
-import 'package:PiliPlus/pages/video/reply/widgets/reply_item_grpc.dart';
-import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/services/download/download_service.dart';
-import 'package:PiliPlus/utils/accounts.dart';
-import 'package:PiliPlus/utils/cache_manager.dart';
-import 'package:PiliPlus/utils/extension/num_ext.dart';
-import 'package:PiliPlus/utils/feed_back.dart';
-import 'package:PiliPlus/utils/global_data.dart';
-import 'package:PiliPlus/utils/image_utils.dart';
-import 'package:PiliPlus/utils/path_utils.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:PiliPlus/utils/storage.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:PiliPlus/utils/update.dart';
-import 'package:PiliPlus/utils/utils.dart';
+import 'package:PiliNext/pages/common/slide/common_slide_page.dart';
+import 'package:PiliNext/pages/home/controller.dart';
+import 'package:PiliNext/pages/main/controller.dart';
+import 'package:PiliNext/pages/setting/models/model.dart';
+import 'package:PiliNext/pages/setting/widgets/select_dialog.dart';
+import 'package:PiliNext/pages/setting/widgets/slider_dialog.dart';
+import 'package:PiliNext/pages/video/reply/widgets/reply_item_grpc.dart';
+import 'package:PiliNext/plugin/pl_player/controller.dart';
+import 'package:PiliNext/services/download/download_service.dart';
+import 'package:PiliNext/utils/accounts.dart';
+import 'package:PiliNext/utils/cache_manager.dart';
+import 'package:PiliNext/utils/extension/num_ext.dart';
+import 'package:PiliNext/utils/feed_back.dart';
+import 'package:PiliNext/utils/global_data.dart';
+import 'package:PiliNext/utils/image_utils.dart';
+import 'package:PiliNext/utils/path_utils.dart';
+import 'package:PiliNext/utils/platform_utils.dart';
+import 'package:PiliNext/utils/storage.dart';
+import 'package:PiliNext/utils/storage_key.dart';
+import 'package:PiliNext/utils/storage_pref.dart';
+import 'package:PiliNext/utils/update.dart';
+import 'package:PiliNext/utils/utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart' hide RefreshIndicator;

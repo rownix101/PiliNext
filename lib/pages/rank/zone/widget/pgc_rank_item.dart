@@ -1,11 +1,11 @@
-import 'package:PiliPlus/common/style.dart';
-import 'package:PiliPlus/common/widgets/image/image_save.dart';
-import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
-import 'package:PiliPlus/common/widgets/stat/stat.dart';
-import 'package:PiliPlus/models/common/stat_type.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_rank/pgc_rank_item_model.dart';
-import 'package:PiliPlus/utils/app_scheme.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
+import 'package:PiliNext/common/style.dart';
+import 'package:PiliNext/common/widgets/image/image_save.dart';
+import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
+import 'package:PiliNext/common/widgets/stat/stat.dart';
+import 'package:PiliNext/models/common/stat_type.dart';
+import 'package:PiliNext/models_new/pgc/pgc_rank/pgc_rank_item_model.dart';
+import 'package:PiliNext/utils/app_scheme.dart';
+import 'package:PiliNext/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 
 class PgcRankItem extends StatelessWidget {

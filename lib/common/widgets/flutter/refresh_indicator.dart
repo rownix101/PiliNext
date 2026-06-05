@@ -7,8 +7,8 @@
 import 'dart:async' show Completer;
 import 'dart:io' show Platform;
 
-import 'package:PiliPlus/common/widgets/scroll_behavior.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliNext/common/widgets/scroll_behavior.dart';
+import 'package:PiliNext/utils/storage_pref.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart'
     show RefreshScrollPhysics;
 import 'package:flutter/foundation.dart' show clampDouble;

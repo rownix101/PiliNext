@@ -1,9 +1,9 @@
-import 'package:PiliPlus/http/dynamics.dart';
-import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/http/reply.dart';
-import 'package:PiliPlus/models/dynamics/result.dart';
-import 'package:PiliPlus/pages/common/dyn/common_dyn_controller.dart';
-import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliNext/http/dynamics.dart';
+import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/http/reply.dart';
+import 'package:PiliNext/models/dynamics/result.dart';
+import 'package:PiliNext/pages/common/dyn/common_dyn_controller.dart';
+import 'package:PiliNext/utils/id_utils.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 

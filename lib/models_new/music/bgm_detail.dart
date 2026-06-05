@@ -1,4 +1,4 @@
-import 'package:PiliPlus/models/model_owner.dart';
+import 'package:PiliNext/models/model_owner.dart';
 
 class MusicDetail {
   MusicDetail({

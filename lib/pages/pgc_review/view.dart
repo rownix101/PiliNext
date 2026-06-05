@@ -1,9 +1,9 @@
-import 'package:PiliPlus/models/common/pgc_review_type.dart';
-import 'package:PiliPlus/pages/pgc_review/child/controller.dart';
-import 'package:PiliPlus/pages/pgc_review/child/view.dart';
-import 'package:PiliPlus/pages/pgc_review/post/view.dart';
-import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
+import 'package:PiliNext/models/common/pgc_review_type.dart';
+import 'package:PiliNext/pages/pgc_review/child/controller.dart';
+import 'package:PiliNext/pages/pgc_review/child/view.dart';
+import 'package:PiliNext/pages/pgc_review/post/view.dart';
+import 'package:PiliNext/utils/extension/scroll_controller_ext.dart';
+import 'package:PiliNext/utils/extension/theme_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
