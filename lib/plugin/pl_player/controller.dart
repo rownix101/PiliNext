@@ -701,6 +701,11 @@ class PlPlayerController with BlockConfigMixin {
 
       await _initializePlayer();
       onInit?.call();
+      // 预加载缩略图数据，避免首次拖动时无预览
+      if (showSeekPreview && !isLive && !isFileSource) {
+        videoShot = LoadingState.loading();
+        getVideoShot();
+      }
     } catch (err, stackTrace) {
       dataStatus.value = DataStatus.error;
       if (kDebugMode) {
@@ -1694,8 +1699,11 @@ class PlPlayerController with BlockConfigMixin {
   late final RxBool showPreview = false.obs;
   late final showSeekPreview = Pref.showSeekPreview;
   late final previewIndex = RxnInt();
+  // 0.0~1.0，预览图在进度条上的水平位置比例
+  final previewRatio = 0.5.obs;
 
-  void updatePreviewIndex(int seconds) {
+  void updatePreviewIndex(int seconds, {double ratio = 0.5}) {
+    previewRatio.value = ratio;
     if (videoShot == null) {
       videoShot = LoadingState.loading();
       getVideoShot();

@@ -8,6 +8,7 @@ import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/custom_icon.dart';
 import 'package:PiliNext/common/widgets/flutter/pop_scope.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
+import 'package:PiliNext/common/widgets/image_viewer/hero.dart';
 import 'package:PiliNext/common/widgets/keep_alive_wrapper.dart';
 import 'package:PiliNext/common/widgets/route_aware_mixin.dart';
 import 'package:PiliNext/common/widgets/scroll_physics.dart';
@@ -1499,6 +1500,36 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     );
   }
 
+  Widget _playerCover({
+    required double width,
+    required double height,
+    bool enableHero = false,
+  }) {
+    final cover = videoDetailController.cover.value;
+    final child = ClipRRect(
+      borderRadius: BorderRadius.circular(isFullScreen ? 0 : 12),
+      child: ColoredBox(
+        color: Colors.black,
+        child: cover.isEmpty
+            ? const SizedBox.expand()
+            : NetworkImgLayer(
+                type: .emote,
+                quality: 60,
+                src: cover,
+                width: width,
+                height: height,
+                cacheWidth: true,
+                getPlaceHolder: () => Center(
+                  child: Image.asset(Assets.loading),
+                ),
+              ),
+      ),
+    );
+
+    if (!enableHero || heroTag == null || isFullScreen) return child;
+    return fromHero(tag: heroTag, child: child);
+  }
+
   Widget videoPlayer({required double width, required double height}) {
     final isFullScreen = this.isFullScreen;
     return Stack(
@@ -1509,24 +1540,33 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         plPlayer(width: width, height: height),
 
         Obx(() {
+          if (videoDetailController.autoPlay &&
+              !videoDetailController.videoState.value &&
+              !isFullScreen) {
+            return Positioned.fill(
+              child: IgnorePointer(
+                child: _playerCover(
+                  width: width,
+                  height: height,
+                  enableHero: true,
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }),
+
+        Obx(() {
           if (!videoDetailController.autoPlay) {
             return Positioned.fill(
               bottom: -1,
               child: GestureDetector(
                 onTap: handlePlay,
                 behavior: .opaque,
-                child: Obx(
-                  () => NetworkImgLayer(
-                    type: .emote,
-                    quality: 60,
-                    src: videoDetailController.cover.value,
-                    width: width,
-                    height: height,
-                    cacheWidth: true,
-                    getPlaceHolder: () => Center(
-                      child: Image.asset(Assets.loading),
-                    ),
-                  ),
+                child: _playerCover(
+                  width: width,
+                  height: height,
+                  enableHero: true,
                 ),
               ),
             );

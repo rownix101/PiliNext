@@ -51,53 +51,76 @@ Widget buildDmChart(
   );
 }
 
+// 进度条高度 + 少量间距
+const _kProgressBarOffset = 14.0;
+
 Widget buildSeekPreviewWidget(
   PlPlayerController plPlayerController,
   double maxWidth,
   double maxHeight,
   ValueGetter<bool> isMounted,
 ) {
-  return Obx(
-    () {
-      if (!plPlayerController.showPreview.value) {
-        return const SizedBox.shrink();
+  return Obx(() {
+    if (!plPlayerController.showPreview.value) {
+      return const SizedBox.shrink();
+    }
+
+    try {
+      final data = plPlayerController.videoShot!.data;
+
+      final double scale =
+          plPlayerController.isFullScreen.value &&
+              (PlatformUtils.isDesktop || !plPlayerController.isVertical)
+          ? 4
+          : 3;
+      double thumbHeight = 27 * scale;
+      final compatHeight = maxHeight - 140;
+      if (compatHeight > 50) {
+        thumbHeight = math.min(thumbHeight, compatHeight);
       }
 
-      try {
-        final data = plPlayerController.videoShot!.data;
+      final int imgXLen = data.imgXLen;
+      final int imgYLen = data.imgYLen;
+      final int totalPerImage = data.totalPerImage;
+      double imgXSize = data.imgXSize;
+      double imgYSize = data.imgYSize;
 
-        final double scale =
-            plPlayerController.isFullScreen.value &&
-                (PlatformUtils.isDesktop || !plPlayerController.isVertical)
-            ? 4
-            : 3;
-        double height = 27 * scale;
-        final compatHeight = maxHeight - 140;
-        if (compatHeight > 50) {
-          height = math.min(height, compatHeight);
-        }
+      return Obx(() {
+        final index = plPlayerController.previewIndex.value;
+        if (index == null) return const SizedBox.shrink();
 
-        final int imgXLen = data.imgXLen;
-        final int imgYLen = data.imgYLen;
-        final int totalPerImage = data.totalPerImage;
-        double imgXSize = data.imgXSize;
-        double imgYSize = data.imgYSize;
+        final ratio = plPlayerController.previewRatio.value;
+        final int pageIndex = (index ~/ totalPerImage).clamp(
+          0,
+          data.image.length - 1,
+        );
+        final int align = index % totalPerImage;
+        final int x = align % imgXLen;
+        final int y = align ~/ imgYLen;
+        final url = data.image[pageIndex];
 
-        return Align(
-          alignment: Alignment.center,
-          child: Obx(
-            () {
-              final index = plPlayerController.previewIndex.value!;
-              int pageIndex = (index ~/ totalPerImage).clamp(
-                0,
-                data.image.length - 1,
-              );
-              int align = index % totalPerImage;
-              int x = align % imgXLen;
-              int y = align ~/ imgYLen;
-              final url = data.image[pageIndex];
+        // 预览图宽度（先用高度比估算，VideoShotImage 加载后会更新 imgXSize）
+        final thumbWidth = imgXSize > 0
+            ? thumbHeight * imgXSize / imgYSize
+            : thumbHeight * 16 / 9;
 
-              return ClipRRect(
+        // 水平位置：跟随拖动比例，夹紧边缘
+        final halfW = thumbWidth / 2;
+        final rawLeft = ratio * maxWidth - halfW;
+        final left = rawLeft.clamp(8.0, maxWidth - thumbWidth - 8);
+
+        // 时间戳
+        final totalMs = plPlayerController.duration.value.inMilliseconds;
+        final posMs = (ratio * totalMs).round();
+        final timeStr = DurationUtils.formatDuration(posMs ~/ 1000);
+
+        return Positioned(
+          left: left,
+          bottom: _kProgressBarOffset,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
                 borderRadius: Style.mdRadius,
                 child: VideoShotImage(
                   url: url,
@@ -105,23 +128,33 @@ Widget buildSeekPreviewWidget(
                   y: y,
                   imgXSize: imgXSize,
                   imgYSize: imgYSize,
-                  height: height,
+                  height: thumbHeight,
                   imageCache: plPlayerController.previewCache,
                   onSetSize: (xSize, ySize) => data
                     ..imgXSize = imgXSize = xSize
                     ..imgYSize = imgYSize = ySize,
                   isMounted: isMounted,
                 ),
-              );
-            },
+              ),
+              const SizedBox(height: 4),
+              Text(
+                timeStr,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                ),
+              ),
+            ],
           ),
         );
-      } catch (e) {
-        if (kDebugMode) rethrow;
-        return const SizedBox.shrink();
-      }
-    },
-  );
+      });
+    } catch (e) {
+      if (kDebugMode) rethrow;
+      return const SizedBox.shrink();
+    }
+  });
 }
 
 class VideoShotImage extends StatefulWidget {

@@ -1090,7 +1090,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       if (!plPlayerController.isFileSource &&
           plPlayerController.showSeekPreview &&
           plPlayerController.cancelSeek != true) {
-        plPlayerController.updatePreviewIndex(newPos ~/ 1000);
+        plPlayerController.updatePreviewIndex(
+          newPos ~/ 1000,
+          ratio: (newPos / plPlayerController.duration.value.inMilliseconds)
+              .clamp(0.0, 1.0),
+        );
       }
     } else if (_gestureType == .left) {
       // 左边区域 👈
@@ -1335,7 +1339,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       if (!plPlayerController.isFileSource &&
           plPlayerController.showSeekPreview &&
           plPlayerController.cancelSeek != true) {
-        plPlayerController.updatePreviewIndex(newPos ~/ 1000);
+        plPlayerController.updatePreviewIndex(
+          newPos ~/ 1000,
+          ratio: (newPos / plPlayerController.duration.value.inMilliseconds)
+              .clamp(0.0, 1.0),
+        );
       }
     } else if (_gestureType == .right) {
       if (!plPlayerController.enableSlideVolumeBrightness) {
