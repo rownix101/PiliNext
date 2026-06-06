@@ -1,7 +1,8 @@
 import 'dart:io' show Platform;
 
+import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/widgets/color_palette.dart';
-import 'package:PiliNext/main.dart' show MyApp;
+
 import 'package:PiliNext/models/common/nav_bar_config.dart';
 import 'package:PiliNext/models/common/theme/theme_color_type.dart';
 import 'package:PiliNext/models/common/theme/theme_type.dart';
@@ -44,14 +45,15 @@ class _ColorSelectPageState extends State<ColorSelectPage> {
   FlexSchemeVariant _dynamicSchemeVariant = Pref.schemeVariant;
 
   Future<void> _onChanged([bool? val]) async {
-    val ??= !ctr.dynamicColor.value;
-    if (val && !await MyApp.initPlatformState()) {
-      SmartDialog.showToast('设备可能不支持动态取色');
-      return;
+    // PiliNext uses a fixed hand-crafted color palette.
+    // Material You dynamic colors (Monet) have been removed — they are
+    // too saturated for our desaturated design language.
+    if (ctr.dynamicColor.value) {
+      ctr.dynamicColor.value = false;
+      await GStorage.setting.put(SettingBoxKey.dynamicColor, false);
+      Get.updateMyAppTheme();
     }
-    ctr.dynamicColor.value = val;
-    await GStorage.setting.put(SettingBoxKey.dynamicColor, val);
-    Get.updateMyAppTheme();
+    SmartDialog.showToast('PiliNext 使用手工调色板，不支持动态取色');
   }
 
   @override
@@ -136,9 +138,12 @@ class _ColorSelectPageState extends State<ColorSelectPage> {
           Padding(
             padding: padding,
             child: AnimatedSize(
-              curve: Curves.easeInOut,
+              curve: FluidTokens.curveStandard,
               alignment: Alignment.topCenter,
-              duration: const Duration(milliseconds: 200),
+              duration: FluidTokens.effectiveDuration(
+                context,
+                FluidTokens.durationMd,
+              ),
               child: Obx(
                 () => ctr.dynamicColor.value
                     ? const SizedBox.shrink()
@@ -205,6 +210,8 @@ class _ColorSelectPageState extends State<ColorSelectPage> {
           ExcludeFocus(
             child: IgnorePointer(
               child: NavigationBar(
+                selectedIndex: 0,
+                onDestinationSelected: (_) {},
                 destinations: NavigationBarType.values
                     .map(
                       (item) => NavigationDestination(

@@ -1,24 +1,13 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 
-import 'fluid_tokens.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 
-/// A pill-shaped indicator that animates between positions with a
-/// jelly-like stretch-squish effect — the signature animation of
-/// PiliNext's navigation bar.
+/// A liquid pill indicator for PiliNext navigation.
 ///
-/// The animation has 3 phases:
-/// 1. **Stretch** (0–40%): indicator stretches from A toward B,
-///    width grows to (distance × 1.3 + originalWidth), then begins
-///    moving toward target.
-/// 2. **Overshoot** (40–70%): indicator arrives at B, overshoots by
-///    5–8dp, aspect ratio recovers from stretch.
-/// 3. **Settle** (70–100%): indicator bounces back to exact B,
-///    1–2 damped oscillations then stable.
-///
-/// Total duration: ~500ms (distance-dependent, longer for far jumps).
+/// Instead of scaling one rectangle, the leading and trailing edges move on
+/// slightly offset timing. The result feels like a modern liquid capsule: the
+/// edge closest to the destination leads, the opposite edge follows, then both
+/// settle without exaggerated wobble.
 class JellyIndicator extends StatefulWidget {
   const JellyIndicator({
     super.key,
@@ -57,9 +46,14 @@ class _JellyIndicatorState extends State<JellyIndicator>
   late AnimationController _controller;
   int _previousIndex = 0;
 
-  // Computed positions
-  double get _startX => _previousIndex * widget.itemWidth;
-  double get _endX => widget.currentIndex * widget.itemWidth;
+  double get _pillWidth => (widget.itemWidth - widget.padding.horizontal).clamp(
+    0.0,
+    double.infinity,
+  );
+  double get _startLeft =>
+      _previousIndex * widget.itemWidth + widget.padding.left;
+  double get _endLeft =>
+      widget.currentIndex * widget.itemWidth + widget.padding.left;
 
   @override
   void initState() {
@@ -67,18 +61,24 @@ class _JellyIndicatorState extends State<JellyIndicator>
     _previousIndex = widget.currentIndex;
     _controller = AnimationController(
       vsync: this,
-      duration: FluidTokens.durationXl,
+      duration: FluidTokens.durationLg,
+      value: 1.0,
     );
-    _controller.value = 1.0;
   }
 
   @override
   void didUpdateWidget(JellyIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.currentIndex != _previousIndex && widget.currentIndex != oldWidget.currentIndex) {
-      _previousIndex = oldWidget.currentIndex;
-      _controller.reset();
-      _controller.forward();
+    if (widget.currentIndex != oldWidget.currentIndex ||
+        widget.itemWidth != oldWidget.itemWidth) {
+      _previousIndex = oldWidget.currentIndex.clamp(0, widget.itemCount - 1);
+      final jump = (widget.currentIndex - _previousIndex).abs();
+      _controller.duration = jump <= 1
+          ? const Duration(milliseconds: 260)
+          : const Duration(milliseconds: 320);
+      _controller
+        ..reset()
+        ..forward();
     }
   }
 
@@ -90,90 +90,90 @@ class _JellyIndicatorState extends State<JellyIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.indicatorColor ??
+    final color =
+        widget.indicatorColor ??
         Theme.of(context).colorScheme.primary.withValues(alpha: 0.20);
+    final reduceMotion = FluidTokens.reduceMotionOf(context);
+
+    if (reduceMotion) {
+      return AnimatedPositioned(
+        duration: FluidTokens.durationReduced,
+        curve: FluidTokens.curveStandard,
+        left: _endLeft,
+        top: widget.padding.top,
+        width: _pillWidth,
+        height: widget.indicatorHeight,
+        child: _Pill(color: color, height: widget.indicatorHeight),
+      );
+    }
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        final t = _controller.value; // 0 → 1
-        final distance = _endX - _startX;
+        final t = _controller.value;
+        final startRight = _startLeft + _pillWidth;
+        final endRight = _endLeft + _pillWidth;
+        final movingRight = _endLeft >= _startLeft;
 
-        // ── Phase decomposition ──────────────────────────────
-        // Phase 1 (0.0 – 0.40): stretch
-        // Phase 2 (0.40 – 0.70): overshoot
-        // Phase 3 (0.70 – 1.00): settle
+        final leadProgress = _liquidEase((t / 0.72).clamp(0.0, 1.0));
+        final followProgress = _liquidEase(((t - 0.12) / 0.78).clamp(0.0, 1.0));
+        final settle = _settle(t);
+        final overshoot = (1 - t).clamp(0.0, 1.0) * 3.0 * settle;
 
-        double translateX;
-        double scaleX;
-        double scaleY;
-
-        if (t < 0.40) {
-          // Stretch phase
-          final p = t / 0.40; // normalize to 0→1 within phase
-          // Width stretches by up to 30% of distance
-          scaleX = 1.0 + 0.3 * (1.0 - _easeOut(p)) * (distance.abs() / widget.itemWidth).clamp(0.0, 1.5);
-          scaleY = 1.0 / scaleX; // preserve area (squish vertically)
-          // Movement starts slow, accelerates
-          translateX = _startX + distance * _easeInOut(p * 0.6);
-        } else if (t < 0.70) {
-          // Overshoot phase
-          final p = (t - 0.40) / 0.30; // normalize to 0→1
-          final overshoot = 8.0 * (1.0 - p); // 8dp → 0dp overshoot
-          final overshootSign = distance >= 0 ? 1.0 : -1.0;
-          translateX = _endX + overshoot * overshootSign;
-          // Scale recovers from stretch to normal
-          scaleX = 1.0 + 0.05 * (1.0 - p);
-          scaleY = 1.0;
+        double left;
+        double right;
+        if (movingRight) {
+          right = _lerp(startRight, endRight, leadProgress) + overshoot;
+          left = _lerp(_startLeft, _endLeft, followProgress);
         } else {
-          // Settle phase
-          final p = (t - 0.70) / 0.30; // normalize to 0→1
-          // Damped oscillation: 2 bounces
-          final oscillation = _dampedOscillation(p, cycles: 2, damping: 0.7);
-          translateX = _endX + oscillation * 3; // max 3dp wobble
-          scaleX = 1.0 + oscillation.abs() * 0.03;
-          scaleY = 1.0;
+          left = _lerp(_startLeft, _endLeft, leadProgress) - overshoot;
+          right = _lerp(startRight, endRight, followProgress);
         }
 
-        return Transform.translate(
-          offset: Offset(
-            translateX + widget.padding.left,
-            widget.padding.top,
-          ),
-          child: Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..scale(scaleX, scaleY),
-            child: Container(
-              width: widget.itemWidth - widget.padding.horizontal,
-              height: widget.indicatorHeight,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(widget.indicatorHeight / 2),
-              ),
-            ),
-          ),
+        final minWidth = _pillWidth * 0.78;
+        if (right - left < minWidth) {
+          final center = (left + right) / 2;
+          left = center - minWidth / 2;
+          right = center + minWidth / 2;
+        }
+
+        return Positioned(
+          left: left,
+          top: widget.padding.top,
+          width: right - left,
+          height: widget.indicatorHeight,
+          child: _Pill(color: color, height: widget.indicatorHeight),
         );
       },
     );
   }
 
-  // ── Easing helpers ──────────────────────────────────────────
+  static double _lerp(double a, double b, double t) => a + (b - a) * t;
 
-  static double _easeOut(double t) {
-    return 1.0 - (1.0 - t) * (1.0 - t);
+  static double _liquidEase(double t) {
+    return 1 - (1 - t) * (1 - t) * (1 - t);
   }
 
-  static double _easeInOut(double t) {
-    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  static double _settle(double t) {
+    if (t < 0.78) return 0;
+    final p = (t - 0.78) / 0.22;
+    return (1 - p).clamp(0.0, 1.0);
   }
+}
 
-  /// Damped sinusoidal oscillation.
-  /// [cycles] = number of full cycles, [damping] = amplitude decay per cycle.
-  static double _dampedOscillation(double t, {int cycles = 2, double damping = 0.7}) {
-    if (t >= 1.0) return 0.0;
-    final amplitude = (1.0 - t).clamp(0.0, 1.0) * damping;
-    final frequency = cycles * 2 * 3.14159;
-    return amplitude * math.sin(t * frequency);
+class _Pill extends StatelessWidget {
+  const _Pill({required this.color, required this.height});
+
+  final Color color;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(height / 2),
+      ),
+    );
   }
 }

@@ -1,158 +1,137 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
-/// PiliNext Fluid Animation System — Duration and Spring tokens.
+/// PiliNext Fluid Animation System — semantic motion tokens.
 ///
-/// Design philosophy:
-/// - All animations are spring-based. No ease-in-out, no linear.
-/// - Springs inherit velocity from gestures (velocity-aware).
-/// - Duration tokens are for spring target hints, not fixed-duration curves.
-/// - Every spring preset has a distinct "feel" matched to its use case.
-///
-/// Usage:
-/// ```dart
-/// // Instead of:
-/// // AnimatedOpacity(duration: Duration(milliseconds: 300), curve: Curves.easeInOut, ...)
-/// // Use:
-/// // FluidTransition(opacity: 1.0, preset: FluidTokens.fadeIn, child: ...)
-/// ```
+/// Motion is intentionally split by purpose instead of by raw duration:
+/// utility interactions stay quiet, navigation gets directional structure,
+/// and expressive spring motion is reserved for signature moments.
 abstract final class FluidTokens {
   FluidTokens._();
 
   // ═══════════════════════════════════════════════════════════════
-  // Level 1: Duration Tokens
+  // Duration tokens
   // ═══════════════════════════════════════════════════════════════
 
-  /// 100ms — Micro-interactions: ripple, icon state toggle, hover
-  static const Duration durationXs = Duration(milliseconds: 100);
+  /// 80ms — immediate press/release feedback.
+  static const Duration durationInstant = Duration(milliseconds: 80);
 
-  /// 150ms — Small transitions: tooltips, tag switches, badge appear
-  static const Duration durationSm = Duration(milliseconds: 150);
+  /// 120ms — icon toggles, hover/focus, tiny affordances.
+  static const Duration durationXs = Duration(milliseconds: 120);
 
-  /// 200ms — Medium transitions: control bar show/hide, FAB, chips
-  static const Duration durationMd = Duration(milliseconds: 200);
+  /// 160ms — small utility transitions.
+  static const Duration durationSm = Duration(milliseconds: 160);
 
-  /// 300ms — Large transitions: page routes, bottom sheets, modals
+  /// 220ms — default content/control motion.
+  static const Duration durationMd = Duration(milliseconds: 220);
+
+  /// 300ms — panels, sheets, navigation indicators.
   static const Duration durationLg = Duration(milliseconds: 300);
 
-  /// 500ms — Heavy transitions: nav bar indicator, fullscreen enter/exit
-  static const Duration durationXl = Duration(milliseconds: 500);
+  /// 380ms — heavier transitions such as fullscreen/player state changes.
+  static const Duration durationXl = Duration(milliseconds: 380);
+
+  /// Reduced-motion fallback duration: short enough to avoid spatial motion,
+  /// long enough that state changes do not feel like visual glitches.
+  static const Duration durationReduced = Duration(milliseconds: 80);
 
   // ═══════════════════════════════════════════════════════════════
-  // Level 2: Spring Presets
+  // Curves
   // ═══════════════════════════════════════════════════════════════
 
-  /// Light, fast, with subtle bounce.
-  /// Use: button feedback, switch toggle, micro-interactions.
-  /// Feel: snappy click with a hint of liveliness.
-  static final SpringDescription springSnappy = const SpringDescription(
-    mass: 0.8,
-    stiffness: 600,
-    damping: 0.85,
+  static const Curve curveEnter = Curves.easeOutCubic;
+  static const Curve curveExit = Curves.easeInCubic;
+  static const Curve curveStandard = Curves.easeInOutCubic;
+  static const Curve curveEmphasized = Curves.easeInOutCubicEmphasized;
+
+  // ═══════════════════════════════════════════════════════════════
+  // Spring presets
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Fast and tactile. Use for button press feedback and tiny toggles.
+  static const SpringDescription springSnappy = SpringDescription(
+    mass: 0.75,
+    stiffness: 520,
+    damping: 34,
   );
 
-  /// Liquid flow, visible overshoot.
-  /// Use: page transitions, panel slide-in, modal present.
-  /// Feel: water-like flow with clear elastic overshoot.
-  static final SpringDescription springFluid = const SpringDescription(
+  /// Smooth, modern, low-overshoot movement. Use for content and navigation.
+  static const SpringDescription springSmooth = SpringDescription(
     mass: 1.0,
-    stiffness: 350,
-    damping: 0.75,
+    stiffness: 360,
+    damping: 34,
   );
 
-  /// Jelly stretch-squish, high elasticity, long settle.
-  /// Use: nav bar indicator, like burst, notification arrival.
-  /// Feel: pudding-like with dramatic stretch and wobble.
-  static final SpringDescription springJelly = const SpringDescription(
-    mass: 1.2,
-    stiffness: 250,
-    damping: 0.65,
+  /// Liquid but controlled. Use for panels and directional transitions.
+  static const SpringDescription springFluid = SpringDescription(
+    mass: 1.0,
+    stiffness: 300,
+    damping: 27,
   );
 
-  /// Heavy weight, slow but forceful, almost no bounce.
-  /// Use: fullscreen enter/exit, heavy page transitions.
-  /// Feel: massive object moving with authority.
-  static final SpringDescription springHeavy = const SpringDescription(
-    mass: 1.5,
-    stiffness: 200,
-    damping: 0.9,
+  /// Expressive signature motion. Use sparingly for nav pill / delight moments.
+  static const SpringDescription springExpressive = SpringDescription(
+    mass: 1.0,
+    stiffness: 260,
+    damping: 22,
   );
 
-  /// Gentle, critically-damped, no bounce. Does not disturb.
-  /// Use: fade in/out, list item appear, image load complete.
-  /// Feel: whisper-quiet, barely noticeable.
-  static final SpringDescription springGentle = const SpringDescription(
-    mass: 0.5,
-    stiffness: 500,
-    damping: 1.0,
+  /// Heavy state transitions, almost no bounce.
+  static const SpringDescription springHeavy = SpringDescription(
+    mass: 1.25,
+    stiffness: 240,
+    damping: 36,
   );
+
+  /// Quiet fade/list-item motion.
+  static const SpringDescription springGentle = SpringDescription(
+    mass: 0.8,
+    stiffness: 420,
+    damping: 38,
+  );
+
+  /// Backwards-compatible alias for older code.
+  static const SpringDescription springJelly = springExpressive;
+
+  /// Backwards-compatible alias for older code.
+  static const SpringDescription iconBounceSpring = springSnappy;
 
   // ═══════════════════════════════════════════════════════════════
-  // Level 3: Combo Presets (opacity + transform bundles)
+  // Distances and scale values
   // ═══════════════════════════════════════════════════════════════
 
-  /// Fade in: opacity 0→1, gentle spring
-  static const _FadePreset fadeIn = _FadePreset(
-    opacityBegin: 0.0,
-    opacityEnd: 1.0,
-    duration: durationMd,
-    spring: springGentle,
-  );
+  static const double pressScale = 0.96;
+  static const double contentEnterDy = 8;
+  static const double navigationDx = 16;
+  static const double panelEnterDy = 16;
+  static const double controlBarDy = 12;
 
-  /// Fade out: opacity 1→0, gentle spring
-  static const _FadePreset fadeOut = _FadePreset(
-    opacityBegin: 1.0,
-    opacityEnd: 0.0,
-    duration: durationSm,
-    spring: springGentle,
-  );
+  // ═══════════════════════════════════════════════════════════════
+  // Reduced motion
+  // ═══════════════════════════════════════════════════════════════
 
-  /// Slide up + fade in: translateY(20→0), fluid spring
-  static const _SlidePreset slideUp = _SlidePreset(
-    offsetBegin: Offset(0, 20),
-    offsetEnd: Offset.zero,
-    duration: durationLg,
-    spring: springFluid,
-    fadeIn: true,
-  );
+  /// Whether motion should be reduced for this build context.
+  static bool reduceMotionOf(BuildContext context) {
+    final mediaQuery = MediaQuery.maybeOf(context);
+    if (mediaQuery == null) return false;
+    return mediaQuery.disableAnimations || mediaQuery.accessibleNavigation;
+  }
 
-  /// Slide down + fade out: translateY(0→20), fluid spring
-  static const _SlidePreset slideDown = _SlidePreset(
-    offsetBegin: Offset.zero,
-    offsetEnd: Offset(0, 20),
-    duration: durationMd,
-    spring: springFluid,
-    fadeOut: true,
-  );
-
-  /// Pop in: scale(0.85→1.05→1) + fade in, jelly spring
-  static const _ScalePreset popIn = _ScalePreset(
-    scaleBegin: 0.85,
-    scaleEnd: 1.0,
-    duration: durationMd,
-    spring: springJelly,
-    fadeIn: true,
-  );
-
-  /// Pop out: scale(1→0.9) + fade out, fluid spring
-  static const _ScalePreset popOut = _ScalePreset(
-    scaleBegin: 1.0,
-    scaleEnd: 0.9,
-    duration: durationSm,
-    spring: springFluid,
-    fadeOut: true,
-  );
-
-  /// Icon bounce: scale(1→1.3→0.9→1), jelly spring
-  /// Use for like/bookmark/button press feedback
-  static final SpringDescription iconBounceSpring = springJelly;
+  /// Returns [Duration.zero] for full reduction or a short fallback duration
+  /// for state transitions that still need visual continuity.
+  static Duration effectiveDuration(
+    BuildContext context,
+    Duration duration, {
+    bool keepShortFade = true,
+  }) {
+    if (!reduceMotionOf(context)) return duration;
+    return keepShortFade ? durationReduced : Duration.zero;
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // Utility: SpringSimulation from preset + velocity
   // ═══════════════════════════════════════════════════════════════
 
-  /// Creates a [SpringSimulation] from a preset, initial position,
-  /// target position, and optional initial velocity.
   static SpringSimulation simulation({
     required SpringDescription spring,
     required double from,
@@ -162,9 +141,8 @@ abstract final class FluidTokens {
     return SpringSimulation(spring, from, to, velocity);
   }
 
-  /// Creates a [SpringDescription] with quality/damping trade-off.
-  /// Lower [quality] = more bouncy; higher = more settled.
-  /// Default quality is 1.0 (standard response).
+  /// Creates a [SpringDescription] with damping trade-off.
+  /// Lower [quality] = more expressive; higher = more settled.
   static SpringDescription withQuality(
     SpringDescription base,
     double quality,
@@ -175,58 +153,4 @@ abstract final class FluidTokens {
       damping: base.damping * quality,
     );
   }
-}
-
-// ═════════════════════════════════════════════════════════════════
-// Preset value types
-// ═════════════════════════════════════════════════════════════════
-
-class _FadePreset {
-  final double opacityBegin;
-  final double opacityEnd;
-  final Duration duration;
-  final SpringDescription spring;
-
-  const _FadePreset({
-    required this.opacityBegin,
-    required this.opacityEnd,
-    required this.duration,
-    required this.spring,
-  });
-}
-
-class _SlidePreset {
-  final Offset offsetBegin;
-  final Offset offsetEnd;
-  final Duration duration;
-  final SpringDescription spring;
-  final bool fadeIn;
-  final bool fadeOut;
-
-  const _SlidePreset({
-    required this.offsetBegin,
-    required this.offsetEnd,
-    required this.duration,
-    required this.spring,
-    this.fadeIn = false,
-    this.fadeOut = false,
-  });
-}
-
-class _ScalePreset {
-  final double scaleBegin;
-  final double scaleEnd;
-  final Duration duration;
-  final SpringDescription spring;
-  final bool fadeIn;
-  final bool fadeOut;
-
-  const _ScalePreset({
-    required this.scaleBegin,
-    required this.scaleEnd,
-    required this.duration,
-    required this.spring,
-    this.fadeIn = false,
-    this.fadeOut = false,
-  });
 }

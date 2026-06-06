@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 /// PiliNext glassmorphism depth levels.
@@ -68,15 +70,17 @@ abstract final class GlassTokens {
 
   /// Creates a [BackdropFilter] with the given blur [sigma].
   /// Use for glass backgrounds.
-  static BackdropFilter blurFilter({
+  static Widget blurFilter({
     required double sigma,
     required Widget child,
     Key? key,
   }) {
-    return BackdropFilter(
-      key: key,
-      filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-      child: child,
+    return ClipRect(
+      child: BackdropFilter(
+        key: key,
+        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: child,
+      ),
     );
   }
 }

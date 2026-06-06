@@ -1,34 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
-import 'fluid_tokens.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 
-/// A spring-driven transition widget that replaces [AnimatedOpacity],
-/// [AnimatedContainer], [AnimatedSlide], and [AnimatedScale].
+/// A spring-driven transition widget for modern PiliNext motion.
 ///
-/// All animations use spring physics — velocity-aware, distance-adaptive,
-/// with natural termination. No fixed-duration easing curves.
-///
-/// ## Basic usage
-/// ```dart
-/// FluidTransition(
-///   visible: _isVisible,
-///   preset: FluidTokens.fadeIn,
-///   child: Text('Hello'),
-/// )
-/// ```
-///
-/// ## Explicit parameters (overrides preset)
-/// ```dart
-/// FluidTransition(
-///   visible: _isOpen,
-///   opacityBegin: 0.0,
-///   opacityEnd: 1.0,
-///   spring: FluidTokens.springFluid,
-///   duration: FluidTokens.durationMd,
-///   child: Panel(),
-/// )
-/// ```
+/// It keeps the familiar opacity/scale/offset API, but state changes are driven
+/// by [SpringSimulation] so interrupted animations inherit their current
+/// velocity instead of restarting as fixed linear tweens.
 class FluidTransition extends StatefulWidget {
   const FluidTransition({
     super.key,
@@ -42,6 +21,8 @@ class FluidTransition extends StatefulWidget {
     this.offsetEnd,
     this.spring,
     this.duration,
+    this.initialVelocity = 0,
+    this.reduceMotion = true,
     this.onComplete,
   });
 
@@ -51,8 +32,6 @@ class FluidTransition extends StatefulWidget {
   /// Whether the child should be in its "visible" (end) state.
   final bool visible;
 
-  // ── Value ranges ──────────────────────────────────────────────
-
   final double? opacityBegin;
   final double? opacityEnd;
   final double? scaleBegin;
@@ -60,13 +39,17 @@ class FluidTransition extends StatefulWidget {
   final Offset? offsetBegin;
   final Offset? offsetEnd;
 
-  // ── Physics ───────────────────────────────────────────────────
-
   /// Spring description. Defaults to [FluidTokens.springGentle].
   final SpringDescription? spring;
 
-  /// Duration hint (used for animation controller upper bound).
+  /// Duration fallback used when animations are reduced.
   final Duration? duration;
+
+  /// Optional velocity supplied by gesture-driven callers.
+  final double initialVelocity;
+
+  /// Whether to honor system reduced-motion settings.
+  final bool reduceMotion;
 
   /// Called when the transition completes (settles).
   final VoidCallback? onComplete;
@@ -83,9 +66,9 @@ class _FluidTransitionState extends State<FluidTransition>
   late Animation<Offset> _offset;
 
   bool _wasVisible = true;
-
-  SpringDescription get _spring => widget.spring ?? FluidTokens.springGentle;
+  double _lastControllerValue = 0;
   Duration get _duration => widget.duration ?? FluidTokens.durationMd;
+  SpringDescription get _spring => widget.spring ?? FluidTokens.springGentle;
 
   @override
   void initState() {
@@ -94,57 +77,78 @@ class _FluidTransitionState extends State<FluidTransition>
     _controller = AnimationController(
       vsync: this,
       duration: _duration,
+      value: widget.visible ? 1.0 : 0.0,
     );
+    _lastControllerValue = _controller.value;
+    _rebuildAnimations();
 
-    // Build spring-driven animations from the controller's 0→1 value.
-    _opacity = _buildOpacityAnim();
-    _scale = _buildScaleAnim();
-    _offset = _buildOffsetAnim();
-
-    // Start in the correct state.
-    if (widget.visible) {
-      _controller.value = 1.0;
-    }
-
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed ||
-          status == AnimationStatus.dismissed) {
-        widget.onComplete?.call();
-      }
-    });
+    _controller
+      ..addListener(() {
+        _lastControllerValue = _controller.value;
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed ||
+            status == AnimationStatus.dismissed) {
+          widget.onComplete?.call();
+        }
+      });
   }
 
   @override
   void didUpdateWidget(FluidTransition oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.visible != _wasVisible) {
-      _wasVisible = widget.visible;
-      _animate();
+    if (oldWidget.duration != widget.duration) {
+      _controller.duration = _duration;
     }
     if (oldWidget.spring != widget.spring ||
         oldWidget.opacityBegin != widget.opacityBegin ||
         oldWidget.opacityEnd != widget.opacityEnd ||
-        oldWidget.scaleBegin != widget.scaleEnd ||
+        oldWidget.scaleBegin != widget.scaleBegin ||
+        oldWidget.scaleEnd != widget.scaleEnd ||
         oldWidget.offsetBegin != widget.offsetBegin ||
         oldWidget.offsetEnd != widget.offsetEnd) {
-      setState(() {
-        _opacity = _buildOpacityAnim();
-        _scale = _buildScaleAnim();
-        _offset = _buildOffsetAnim();
-      });
+      _rebuildAnimations();
     }
+    if (widget.visible != _wasVisible) {
+      _wasVisible = widget.visible;
+      _animate();
+    }
+  }
+
+  void _rebuildAnimations() {
+    _opacity = Tween<double>(
+      begin: widget.opacityBegin ?? 0.0,
+      end: widget.opacityEnd ?? 1.0,
+    ).animate(_controller);
+    _scale = Tween<double>(
+      begin: widget.scaleBegin ?? 1.0,
+      end: widget.scaleEnd ?? 1.0,
+    ).animate(_controller);
+    _offset = Tween<Offset>(
+      begin: widget.offsetBegin ?? Offset.zero,
+      end: widget.offsetEnd ?? Offset.zero,
+    ).animate(_controller);
   }
 
   void _animate() {
-    if (widget.visible) {
-      _controller.forward();
-    } else {
-      _controller.reverse();
-    }
+    if (!mounted) return;
+    final target = widget.visible ? 1.0 : 0.0;
+    final inferredVelocity = (_controller.value - _lastControllerValue) * 60;
+    final velocity = widget.initialVelocity != 0
+        ? widget.initialVelocity
+        : inferredVelocity;
+
+    _controller.animateWith(
+      FluidTokens.simulation(
+        spring: _spring,
+        from: _controller.value,
+        to: target,
+        velocity: velocity,
+      ),
+    );
   }
 
   /// Jump to a state immediately (no animation).
-  /// Used when velocity inheritance is handled externally.
   void jumpToVisible(bool visible) {
     _wasVisible = visible;
     _controller.value = visible ? 1.0 : 0.0;
@@ -155,33 +159,6 @@ class _FluidTransitionState extends State<FluidTransition>
     _controller.animateWith(simulation);
   }
 
-  Animation<double> _buildOpacityAnim() {
-    final begin = widget.opacityBegin ?? 0.0;
-    final end = widget.opacityEnd ?? 1.0;
-    return Tween<double>(begin: begin, end: end).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.linear),
-    );
-  }
-
-  Animation<double> _buildScaleAnim() {
-    if (widget.scaleBegin == null && widget.scaleEnd == null) {
-      return Tween<double>(begin: 1.0, end: 1.0).animate(_controller);
-    }
-    final begin = widget.scaleBegin ?? 1.0;
-    final end = widget.scaleEnd ?? 1.0;
-    return Tween<double>(begin: begin, end: end).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.linear),
-    );
-  }
-
-  Animation<Offset> _buildOffsetAnim() {
-    final begin = widget.offsetBegin ?? Offset.zero;
-    final end = widget.offsetEnd ?? Offset.zero;
-    return Tween<Offset>(begin: begin, end: end).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.linear),
-    );
-  }
-
   @override
   void dispose() {
     _controller.dispose();
@@ -190,11 +167,23 @@ class _FluidTransitionState extends State<FluidTransition>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.reduceMotion && FluidTokens.reduceMotionOf(context)) {
+      final opacity = widget.visible
+          ? (widget.opacityEnd ?? 1.0)
+          : (widget.opacityBegin ?? 0.0);
+      return AnimatedOpacity(
+        opacity: opacity,
+        duration: FluidTokens.durationReduced,
+        curve: FluidTokens.curveStandard,
+        child: widget.child,
+      );
+    }
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Opacity(
-          opacity: _opacity.value,
+          opacity: _opacity.value.clamp(0.0, 1.0),
           child: Transform.translate(
             offset: _offset.value,
             child: Transform.scale(

@@ -254,6 +254,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final (light, dark) = getAllTheme();
     return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       title: Constants.appName,
       theme: light,
       darkTheme: dark,
@@ -318,7 +319,6 @@ class MyApp extends StatelessWidget {
     }
     return child;
   }
-
 }
 
 class _CustomHttpOverrides extends HttpOverrides {
