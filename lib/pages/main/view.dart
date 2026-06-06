@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/constants.dart';
 import 'package:PiliNext/common/widgets/glass_navigation_bar.dart';
@@ -43,6 +45,7 @@ class _MainAppState extends PopScopeState<MainApp>
   late final _setting = GStorage.setting;
   late EdgeInsets _padding;
   late ThemeData theme;
+  Timer? _saveWindowBoundsTimer;
 
   @override
   bool get initCanPop => false;
@@ -77,6 +80,7 @@ class _MainAppState extends PopScopeState<MainApp>
       windowManager.setBrightness(brightness);
     }
     // PiliNext: always use bottom navigation, all orientations.
+    _mainController.useBottomNav = true;
   }
 
   @override
@@ -111,6 +115,7 @@ class _MainAppState extends PopScopeState<MainApp>
       trayManager.removeListener(this);
       windowManager.removeListener(this);
     }
+    _saveWindowBoundsTimer?.cancel();
     removeObserverMobile(this);
     PiliScheme.listener?.cancel();
     GStorage.close();
@@ -128,24 +133,58 @@ class _MainAppState extends PopScopeState<MainApp>
   }
 
   @override
-  Future<void> onWindowMoved() async {
-    if (PlPlayerController.instance?.isDesktopPip ?? false) {
-      return;
-    }
-    final Offset offset = await windowManager.getPosition();
-    _setting.put(SettingBoxKey.windowPosition, [offset.dx, offset.dy]);
+  void onWindowMoved() {
+    _debounceSaveWindowBounds();
   }
 
   @override
-  Future<void> onWindowResized() async {
+  void onWindowResized() {
+    _debounceSaveWindowBounds();
+  }
+
+  void _debounceSaveWindowBounds() {
     if (PlPlayerController.instance?.isDesktopPip ?? false) {
       return;
     }
-    final Rect bounds = await windowManager.getBounds();
+    _saveWindowBoundsTimer?.cancel();
+    _saveWindowBoundsTimer = Timer(
+      const Duration(milliseconds: 400),
+      _saveWindowBounds,
+    );
+  }
+
+  Future<void> _saveWindowBounds() async {
+    if (PlPlayerController.instance?.isDesktopPip ?? false) {
+      return;
+    }
+
+    final bounds = await windowManager.getBounds();
+    final size = [bounds.width, bounds.height];
+    final position = [bounds.left, bounds.top];
+    final currentSize = _doubleList(SettingBoxKey.windowSize);
+    final currentPosition = _doubleList(SettingBoxKey.windowPosition);
+
+    if (_listEquals(currentSize, size) &&
+        _listEquals(currentPosition, position)) {
+      return;
+    }
+
     _setting.putAll({
-      SettingBoxKey.windowSize: [bounds.width, bounds.height],
-      SettingBoxKey.windowPosition: [bounds.left, bounds.top],
+      SettingBoxKey.windowSize: size,
+      SettingBoxKey.windowPosition: position,
     });
+  }
+
+  List<double>? _doubleList(String key) {
+    return (_setting.get(key) as List?)
+        ?.map((item) => (item as num).toDouble())
+        .toList();
+  }
+
+  bool _listEquals(List<double>? a, List<double> b) {
+    return a != null &&
+        a.length == b.length &&
+        a.indexed.every((item) => item.$2 == b[item.$1]);
   }
 
   @override
@@ -276,21 +315,28 @@ class _MainAppState extends PopScopeState<MainApp>
     if (_mainController.navigationBars.length <= 1) return null;
 
     return Obx(
-      () => GlassNavigationBar(
-        selectedIndex: _mainController.selectedIndex.value,
-        destinations: _mainController.navigationBars
-            .map(
-              (e) => GlassNavigationDestination(
-                label: e.label,
-                icon: _buildIcon(type: e),
-                selectedIcon: _buildIcon(type: e, selected: true),
-                badge: _badgeForType(e),
-              ),
-            )
-            .toList(),
-        onDestinationSelected: _mainController.setIndex,
-        visible: _mainController.showBottomBar?.value ?? true,
-      ),
+      () {
+        final visible = switch (_mainController.barHideType) {
+          _ when !_mainController.hideBottomBar => true,
+          .instant => _mainController.showBottomBar?.value ?? true,
+          .sync => (_mainController.barOffset?.value ?? 0) == 0,
+        };
+        return GlassNavigationBar(
+          selectedIndex: _mainController.selectedIndex.value,
+          destinations: _mainController.navigationBars
+              .map(
+                (e) => GlassNavigationDestination(
+                  label: e.label,
+                  icon: _buildIcon(type: e),
+                  selectedIcon: _buildIcon(type: e, selected: true),
+                  badge: _badgeForType(e),
+                ),
+              )
+              .toList(),
+          onDestinationSelected: _mainController.setIndex,
+          visible: visible,
+        );
+      },
     );
   }
 
@@ -306,23 +352,32 @@ class _MainAppState extends PopScopeState<MainApp>
     return null;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Widget child;
+  Widget _buildTabContent() {
+    final pages = _mainController.navigationBars.map((i) => i.page).toList();
     if (_mainController.mainTabBarView) {
-      child = CustomTabBarView(
+      return CustomTabBarView(
         scrollDirection: Axis.horizontal, // always horizontal — bottom nav
         physics: const NeverScrollableScrollPhysics(),
         controller: _mainController.controller,
-        children: _mainController.navigationBars.map((i) => i.page).toList(),
-      );
-    } else {
-      child = PageView(
-        physics: const NeverScrollableScrollPhysics(),
-        controller: _mainController.controller,
-        children: _mainController.navigationBars.map((i) => i.page).toList(),
+        children: pages,
       );
     }
+
+    return Obx(() {
+      final index = _mainController.selectedIndex.value.clamp(
+        0,
+        pages.length - 1,
+      );
+      return _DirectionalTabSwitcher(
+        selectedIndex: index,
+        children: pages,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child = _buildTabContent();
 
     // PiliNext: always bottom navigation, all devices.
     // Desktop users can optionally switch to left pill in settings.
@@ -373,5 +428,66 @@ class _MainAppState extends PopScopeState<MainApp>
           )
         : icon;
   }
+}
 
+class _DirectionalTabSwitcher extends StatefulWidget {
+  const _DirectionalTabSwitcher({
+    required this.selectedIndex,
+    required this.children,
+  });
+
+  final int selectedIndex;
+  final List<Widget> children;
+
+  @override
+  State<_DirectionalTabSwitcher> createState() =>
+      _DirectionalTabSwitcherState();
+}
+
+class _DirectionalTabSwitcherState extends State<_DirectionalTabSwitcher> {
+  int _previousIndex = 0;
+
+  @override
+  void didUpdateWidget(_DirectionalTabSwitcher oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != oldWidget.selectedIndex) {
+      _previousIndex = oldWidget.selectedIndex;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = FluidTokens.reduceMotionOf(context);
+    final direction = widget.selectedIndex >= _previousIndex ? 1.0 : -1.0;
+    final duration = FluidTokens.effectiveDuration(
+      context,
+      FluidTokens.durationMd,
+    );
+
+    return AnimatedSwitcher(
+      duration: duration,
+      reverseDuration: duration,
+      switchInCurve: FluidTokens.curveEnter,
+      switchOutCurve: FluidTokens.curveExit,
+      transitionBuilder: (child, animation) {
+        if (reduceMotion) {
+          return FadeTransition(opacity: animation, child: child);
+        }
+        final isIncoming = child.key == ValueKey(widget.selectedIndex);
+        final offsetDirection = isIncoming ? direction : -direction;
+        final offset = Tween<Offset>(
+          begin: Offset(0.035 * offsetDirection, 0),
+          end: Offset.zero,
+        ).animate(animation);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(position: offset, child: child),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey(widget.selectedIndex),
+        child: widget.children[widget.selectedIndex],
+      ),
+    );
+  }
 }

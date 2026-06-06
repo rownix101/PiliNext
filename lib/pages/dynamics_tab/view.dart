@@ -8,6 +8,7 @@ import 'package:PiliNext/models/dynamics/result.dart';
 import 'package:PiliNext/pages/dynamics/controller.dart';
 import 'package:PiliNext/pages/dynamics/widgets/dynamic_panel.dart';
 import 'package:PiliNext/pages/dynamics_tab/controller.dart';
+import 'package:PiliNext/pages/main/controller.dart';
 import 'package:PiliNext/utils/extension/get_ext.dart';
 import 'package:PiliNext/utils/global_data.dart';
 import 'package:PiliNext/utils/waterfall.dart';
@@ -58,7 +59,6 @@ class _DynamicsTabPageState extends State<DynamicsTabPage>
   @override
   void dispose() {
     _listener?.cancel();
-    dynamicsController.mid.close();
     super.dispose();
   }
 
@@ -129,7 +129,10 @@ class _DynamicsTabPageState extends State<DynamicsTabPage>
             : HttpError(onReload: controller.onReload),
       Error(:final errMsg) => HttpError(
         errMsg: errMsg,
-        onReload: controller.onReload,
+        btnText: errMsg == '账号未登录' ? '去登录' : null,
+        onReload: errMsg == '账号未登录'
+            ? Get.find<MainController>().toMinePage
+            : controller.onReload,
       ),
     };
   }

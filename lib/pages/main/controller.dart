@@ -84,7 +84,7 @@ class MainController extends GetxController
             initialIndex: selectedIndex.value,
             length: navigationBars.length,
           )
-        : PageController(initialPage: selectedIndex.value);
+        : null;
 
     hideBottomBar =
         !useSideBar && navigationBars.length > 1 && Pref.hideBottomBar;
@@ -285,6 +285,10 @@ class MainController extends GetxController
   }
 
   void setIndex(int value) {
+    if (value < 0 || value >= navigationBars.length) {
+      return;
+    }
+
     feedBack();
 
     final currentNav = navigationBars[value];
@@ -292,8 +296,6 @@ class MainController extends GetxController
       selectedIndex.value = value;
       if (mainTabBarView) {
         controller.animateTo(value);
-      } else {
-        controller.jumpToPage(value);
       }
       if (currentNav == NavigationBarType.home) {
         checkDefaultSearch();
@@ -335,7 +337,7 @@ class MainController extends GetxController
   @override
   void onClose() {
     barOffset?.close();
-    controller.dispose();
+    controller?.dispose();
     super.onClose();
   }
 

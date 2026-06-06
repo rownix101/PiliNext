@@ -1,11 +1,13 @@
-import 'package:PiliNext/common/design/design_tokens.dart';
+import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/models/common/dynamic/dynamic_badge_mode.dart';
 import 'package:PiliNext/models/common/nav_bar_config.dart';
 import 'package:PiliNext/models/common/reply/reply_sort_type.dart';
 import 'package:PiliNext/models/common/theme/theme_type.dart';
 import 'package:PiliNext/utils/storage.dart';
 import 'package:PiliNext/utils/storage_key.dart';
+import 'package:PiliNext/utils/theme_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Simplified settings page — PiliNext redesign.
 ///
@@ -36,36 +38,59 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
       ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 120),
-        children: [
-          _SectionHeader(title: '播放'),
+        children: _staggerSettingsChildren([
+          const _SectionHeader(title: '播放'),
           ..._playSettings(colorScheme),
 
-          _SectionHeader(title: '弹幕'),
+          const _SectionHeader(title: '弹幕'),
           ..._danmakuSettings(colorScheme),
 
-          _SectionHeader(title: '外观'),
+          const _SectionHeader(title: '外观'),
           ..._appearanceSettings(colorScheme),
 
-          _SectionHeader(title: '导航'),
+          const _SectionHeader(title: '导航'),
           ..._navSettings(colorScheme),
 
-          _SectionHeader(title: '内容'),
+          const _SectionHeader(title: '内容'),
           ..._contentSettings(colorScheme),
 
-          _SectionHeader(title: '消息'),
+          const _SectionHeader(title: '消息'),
           ..._messageSettings(colorScheme),
 
-          _SectionHeader(title: '隐私'),
+          const _SectionHeader(title: '隐私'),
           ..._privacySettings(colorScheme),
 
-          _SectionHeader(title: '其他'),
+          const _SectionHeader(title: '其他'),
           ..._otherSettings(colorScheme),
 
           const SizedBox(height: 32),
           _buildAboutTile(colorScheme),
-        ],
+        ]),
       ),
     );
+  }
+
+  List<Widget> _staggerSettingsChildren(List<Widget> children) {
+    return children.indexed.map((entry) {
+      final index = entry.$1;
+      final child = entry.$2;
+      return TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: Duration(milliseconds: 140 + (index.clamp(0, 12) * 12)),
+        curve: FluidTokens.curveEnter,
+        builder: (context, value, child) {
+          final reduceMotion = FluidTokens.reduceMotionOf(context);
+          return Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: reduceMotion ? Offset.zero : Offset(0, (1 - value) * 8),
+              child: child,
+            ),
+          );
+        },
+        child: child,
+      );
+    }).toList();
   }
 
   // ── Play Settings ────────────────────────────────────────────
@@ -76,7 +101,7 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         icon: Icons.hd,
         label: '默认视频画质 (WiFi)',
         selectedValue: _setting.get(SettingBoxKey.defaultVideoQa) ?? 0,
-        items: const {
+        items: {
           0: '自动',
           16: '360P',
           32: '480P',
@@ -90,7 +115,7 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         icon: Icons.signal_cellular_alt,
         label: '默认视频画质 (蜂窝)',
         selectedValue: _setting.get(SettingBoxKey.defaultVideoQaCellular) ?? 0,
-        items: const {
+        items: {
           0: '自动',
           16: '360P',
           32: '480P',
@@ -125,22 +150,26 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         label: '弹幕开关',
         storageKey: SettingBoxKey.enableShowDanmaku,
       ),
-      _DropdownTile<int>(
+      _DropdownTile<double>(
         icon: Icons.density_medium,
         label: '弹幕密度',
-        selectedValue: _setting.get(SettingBoxKey.danmakuShowArea) ?? 100,
-        items: const {
-          30: '少',
-          50: '中',
-          70: '多',
+        selectedValue: _danmakuShowArea(),
+        items: {
+          0.3: '少',
+          0.5: '中',
+          0.7: '多',
+          1.0: '全屏',
         },
         onChanged: (v) => _setting.put(SettingBoxKey.danmakuShowArea, v),
       ),
       _DropdownTile<double>(
         icon: Icons.format_size,
         label: '弹幕字号',
-        selectedValue: (_setting.get(SettingBoxKey.danmakuFontScale) as num?)?.toDouble() ?? 1.0,
-        items: const {
+        selectedValue:
+            (_setting.get(SettingBoxKey.danmakuFontScale) as num?)
+                ?.toDouble() ??
+            1.0,
+        items: {
           0.85: '小',
           1.0: '中',
           1.15: '大',
@@ -150,8 +179,10 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
       _DropdownTile<double>(
         icon: Icons.opacity,
         label: '弹幕不透明度',
-        selectedValue: (_setting.get(SettingBoxKey.danmakuOpacity) as num?)?.toDouble() ?? 0.7,
-        items: const {
+        selectedValue:
+            (_setting.get(SettingBoxKey.danmakuOpacity) as num?)?.toDouble() ??
+            0.7,
+        items: {
           0.4: '低',
           0.7: '中',
           1.0: '高',
@@ -165,6 +196,15 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         onTap: () {},
       ),
     ];
+  }
+
+  double _danmakuShowArea() {
+    final stored = _setting.get(SettingBoxKey.danmakuShowArea);
+    if (stored is num) {
+      final value = stored.toDouble();
+      return value > 1 ? value / 100 : value;
+    }
+    return 0.5;
   }
 
   // ── Appearance Settings ──────────────────────────────────────
@@ -183,7 +223,9 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         },
         onChanged: (v) {
           _setting.put(SettingBoxKey.themeMode, v);
-          // Force theme rebuild at next app restart
+          Get.changeThemeMode(
+            ThemeUtils.themeMode = ThemeType.values[v].toThemeMode,
+          );
         },
       ),
     ];
@@ -206,13 +248,18 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         items: {
           for (final t in NavigationBarType.values) t: t.label,
         },
-        onChanged: (v) => _setting.put(SettingBoxKey.defaultHomePage, v),
+        onChanged: (v) => _setting.put(SettingBoxKey.defaultHomePage, v.index),
       ),
     ];
   }
 
   NavigationBarType _defaultHomePage() {
     final stored = _setting.get(SettingBoxKey.defaultHomePage);
+    if (stored is int &&
+        stored >= 0 &&
+        stored < NavigationBarType.values.length) {
+      return NavigationBarType.values[stored];
+    }
     if (stored is NavigationBarType) return stored;
     return NavigationBarType.home;
   }
@@ -258,8 +305,8 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         icon: Icons.sort,
         label: '评论排序方式',
         selectedValue: _setting.get(SettingBoxKey.replySortType) ?? 0,
-        items: const {
-          ReplySortType.heat.index: '按热度',
+        items: {
+          ReplySortType.hot.index: '按热度',
           ReplySortType.time.index: '按时间',
         },
         onChanged: (v) => _setting.put(SettingBoxKey.replySortType, v),
@@ -289,7 +336,7 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         selectedValue: _setting.get(SettingBoxKey.msgBadgeMode) ?? 0,
         items: {
           DynamicBadgeMode.number.index: '数字',
-          DynamicBadgeMode.dot.index: '红点',
+          DynamicBadgeMode.point.index: '红点',
           DynamicBadgeMode.hidden.index: '隐藏',
         },
         onChanged: (v) => _setting.put(SettingBoxKey.msgBadgeMode, v),
@@ -417,8 +464,18 @@ class _SwitchTileState extends State<_SwitchTile> {
   @override
   void initState() {
     super.initState();
-    _value = GStorage.setting.get(widget.storageKey) ?? true;
+    _value =
+        GStorage.setting.get(widget.storageKey) ??
+        _defaultValue(widget.storageKey);
   }
+
+  bool _defaultValue(String key) => switch (key) {
+    SettingBoxKey.autoPiP ||
+    SettingBoxKey.enableSponsorBlock ||
+    SettingBoxKey.autoClearCache ||
+    SettingBoxKey.feedBackEnable => false,
+    _ => true,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -452,11 +509,16 @@ class _DropdownTile<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final validValue =
+        items.keys.where((item) => item == selectedValue).length == 1
+        ? selectedValue
+        : null;
+
     return ListTile(
       leading: Icon(icon, size: 20),
       title: Text(label, style: const TextStyle(fontSize: 15)),
       trailing: DropdownButton<T>(
-        value: selectedValue,
+        value: validValue,
         items: items.entries
             .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
             .toList(),

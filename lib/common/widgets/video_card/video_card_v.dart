@@ -2,6 +2,7 @@ import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/badge.dart';
 import 'package:PiliNext/common/widgets/image/image_save.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
+import 'package:PiliNext/common/widgets/image_viewer/hero.dart';
 import 'package:PiliNext/common/widgets/stat/stat.dart';
 import 'package:PiliNext/common/widgets/video_popup_menu.dart';
 import 'package:PiliNext/http/search.dart';
@@ -16,6 +17,7 @@ import 'package:PiliNext/utils/extension/dimension_ext.dart';
 import 'package:PiliNext/utils/id_utils.dart';
 import 'package:PiliNext/utils/page_utils.dart';
 import 'package:PiliNext/utils/platform_utils.dart';
+import 'package:PiliNext/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
@@ -108,11 +110,14 @@ class VideoCardV extends StatelessWidget {
                       return Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          NetworkImgLayer(
-                            src: videoItem.cover,
-                            width: maxWidth,
-                            height: maxHeight,
-                            type: .emote,
+                          _heroCover(
+                            cid: videoItem.goto == 'av' ? videoItem.cid : null,
+                            child: NetworkImgLayer(
+                              src: videoItem.cover,
+                              width: maxWidth,
+                              height: maxHeight,
+                              type: .emote,
+                            ),
                           ),
                           if (videoItem.duration > 0)
                             PBadge(
@@ -147,6 +152,14 @@ class VideoCardV extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _heroCover({required int? cid, required Widget child}) {
+    if (cid == null) return child;
+    return fromHero(
+      tag: Utils.makeHeroTag(cid),
+      child: child,
     );
   }
 
