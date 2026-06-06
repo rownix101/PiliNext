@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:PiliNext/plugin/pl_player/widgets/seek_feedback.dart';
 import 'package:flutter/material.dart';
 
 class ForwardSeekIndicator extends StatefulWidget {
@@ -48,44 +49,10 @@ class ForwardSeekIndicatorState extends State<ForwardSeekIndicator> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        splashColor: const Color(0x44767676),
-        onTap: increment,
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0x00767676),
-                Color(0x88767676),
-              ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.fast_forward,
-                size: 24.0,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                '快进${duration.inSeconds}秒',
-                style: const TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return SeekFeedback(
+      duration: duration,
+      forward: true,
+      onTap: increment,
     );
   }
 }

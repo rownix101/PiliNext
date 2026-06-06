@@ -7,9 +7,6 @@ import 'package:flutter/material.dart';
 /// Applies BackdropFilter blur + semi-transparent surface + subtle border
 /// to any player control bar content. Use as a drop-in background for
 /// [bottom_control.dart] and [header_control.dart].
-///
-/// Animation: appears with spring-fluid (150ms), disappears with
-/// spring-gentle (200ms). Per PRD 4.4.
 class GlassControlBar extends StatefulWidget {
   const GlassControlBar({
     super.key,
@@ -37,7 +34,7 @@ class _GlassControlBarState extends State<GlassControlBar>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: FluidTokens.durationSm,
+      duration: FluidTokens.durationMd,
       value: widget.visible ? 1.0 : 0.0,
     );
   }
@@ -64,13 +61,25 @@ class _GlassControlBarState extends State<GlassControlBar>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final reduceMotion = FluidTokens.reduceMotionOf(context);
+    final border = isDark
+        ? GlassTokens.borderDark(colorScheme.outlineVariant)
+        : GlassTokens.borderLight(colorScheme.outlineVariant);
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        final value = FluidTokens.curveEnter.transform(_controller.value);
+        final dy = widget.isTop
+            ? -FluidTokens.controlBarDy * (1 - value)
+            : FluidTokens.panelEnterDy * (1 - value);
         return Opacity(
-          opacity: _controller.value,
-          child: child,
+          opacity: value.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: reduceMotion ? Offset.zero : Offset(0, dy),
+            child: child,
+          ),
         );
       },
       child: GlassTokens.blurFilter(
@@ -78,15 +87,12 @@ class _GlassControlBarState extends State<GlassControlBar>
         child: Container(
           height: widget.height,
           decoration: BoxDecoration(
-            color: colorScheme.surface
-                .withValues(alpha: GlassTokens.opacityFloating),
+            color: colorScheme.surface.withValues(
+              alpha: GlassTokens.opacityFloating,
+            ),
             border: Border(
-              top: widget.isTop
-                  ? BorderSide.none
-                  : GlassTokens.borderLight(colorScheme.outlineVariant),
-              bottom: widget.isTop
-                  ? GlassTokens.borderLight(colorScheme.outlineVariant)
-                  : BorderSide.none,
+              top: widget.isTop ? BorderSide.none : border,
+              bottom: widget.isTop ? border : BorderSide.none,
             ),
           ),
           child: widget.child,
@@ -96,10 +102,7 @@ class _GlassControlBarState extends State<GlassControlBar>
   }
 }
 
-/// A player button with jelly bounce feedback on press.
-///
-/// Wraps any icon button and applies [FluidTokens.iconBounceSpring]
-/// scale animation on tap — feels like pressing a physical button.
+/// A player button with short tactile feedback on press.
 class BouncePlayerButton extends StatefulWidget {
   const BouncePlayerButton({
     super.key,
@@ -130,18 +133,33 @@ class _BouncePlayerButtonState extends State<BouncePlayerButton>
     super.initState();
     _bounceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 180),
+      duration: FluidTokens.durationSm,
+      value: 1.0,
     );
     _scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(CurveTween(curve: Curves.easeOut), 0.4),
-      TweenSequenceItem(CurveTween(curve: Curves.elasticOut), 0.6),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1.0,
+          end: FluidTokens.pressScale,
+        ).chain(CurveTween(curve: FluidTokens.curveExit)),
+        weight: 0.35,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: FluidTokens.pressScale,
+          end: 1.0,
+        ).chain(CurveTween(curve: FluidTokens.curveEnter)),
+        weight: 0.65,
+      ),
     ]).animate(_bounceController);
   }
 
   void _handleTap() {
-    _bounceController
-      ..reset()
-      ..forward();
+    if (!FluidTokens.reduceMotionOf(context)) {
+      _bounceController
+        ..reset()
+        ..forward();
+    }
     widget.onTap?.call();
   }
 
@@ -156,9 +174,8 @@ class _BouncePlayerButtonState extends State<BouncePlayerButton>
     return AnimatedBuilder(
       animation: _scaleAnim,
       builder: (context, child) {
-        final scale = 1.0 + (1.0 - _scaleAnim.value) * 0.15;
         return Transform.scale(
-          scale: scale,
+          scale: _scaleAnim.value,
           child: child,
         );
       },

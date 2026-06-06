@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/design/design_tokens.dart';
 import 'package:PiliNext/utils/storage.dart';
@@ -51,31 +53,22 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
 
     _fadeAnim = TweenSequence<double>([
       TweenSequenceItem(
-        Tween(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.0, 0.1, curve: Curves.easeOut),
-          ),
+        tween: Tween(begin: 0.0, end: 1.0).chain(
+          CurveTween(curve: const Interval(0.0, 0.1, curve: Curves.easeOut)),
         ),
-        0.1,
+        weight: 0.1,
       ),
       TweenSequenceItem(
-        Tween(begin: 1.0, end: 1.0).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.1, 0.85, curve: Curves.linear),
-          ),
+        tween: Tween(begin: 1.0, end: 1.0).chain(
+          CurveTween(curve: const Interval(0.1, 0.85, curve: Curves.linear)),
         ),
-        0.75,
+        weight: 0.75,
       ),
       TweenSequenceItem(
-        Tween(begin: 1.0, end: 0.0).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.85, 1.0, curve: Curves.easeIn),
-          ),
+        tween: Tween(begin: 1.0, end: 0.0).chain(
+          CurveTween(curve: const Interval(0.85, 1.0, curve: Curves.easeIn)),
         ),
-        0.15,
+        weight: 0.15,
       ),
     ]).animate(_controller);
 
@@ -98,8 +91,12 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
     return AnimatedBuilder(
       animation: _fadeAnim,
       builder: (context, child) {
+        final reduceMotion = FluidTokens.reduceMotionOf(context);
         final opacity = _fadeAnim.value;
         if (opacity <= 0.01) return child!;
+        final contentProgress = reduceMotion
+            ? opacity
+            : Curves.easeOutCubic.transform(opacity.clamp(0.0, 1.0));
         return Stack(
           children: [
             child!,
@@ -122,7 +119,15 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
               child: IgnorePointer(
                 child: Opacity(
                   opacity: opacity,
-                  child: _buildHints(size),
+                  child: Transform.translate(
+                    offset: reduceMotion
+                        ? Offset.zero
+                        : Offset(0, (1 - contentProgress) * 10),
+                    child: Transform.scale(
+                      scale: reduceMotion ? 1.0 : 0.96 + contentProgress * 0.04,
+                      child: _buildHints(size),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -134,7 +139,7 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
   }
 
   Widget _buildHints(Size size) {
-    return Column(
+    return const Column(
       children: [
         // Top: brightness / volume labels
         Expanded(
@@ -174,7 +179,7 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
         ),
         // Bottom: seek hints
         Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: EdgeInsets.only(bottom: 80),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -232,18 +237,21 @@ class _HintPill extends StatelessWidget {
       ),
       child: direction == Axis.vertical
           ? Column(mainAxisSize: MainAxisSize.min, children: children)
-          : Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, color: Colors.white, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: Colors.white, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
     );
   }
 }
