@@ -150,3 +150,8 @@ pili_release.json
 dist
 
 test*
+
+# Claude / Agent config
+.claude/
+AGENTS.md
+CLAUDE.md

@@ -24,7 +24,14 @@ abstract final class HapticService {
   HapticService._();
 
   /// Whether haptic feedback is currently enabled.
-  static bool get enabled => Pref.feedBackEnable;
+  /// Defaults to `true` when storage is unavailable (e.g., in tests).
+  static bool get enabled {
+    try {
+      return Pref.feedBackEnable;
+    } on Error {
+      return true;
+    }
+  }
 
   /// Play haptic at the given [level]. Silently ignored if disabled.
   static void play(HapticLevel level) {

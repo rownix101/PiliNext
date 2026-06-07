@@ -257,10 +257,16 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
 
                     // ── Tab items ─────────────────────────────────
                     Row(
-                      children: List.generate(
-                        widget.destinations.length,
-                        (i) {
-                          final dest = widget.destinations[i];
+                      children: () {
+                        // Grow controller list to match current destination count
+                        while (_tabStatesControllers.length <
+                            widget.destinations.length) {
+                          _tabStatesControllers.add(null);
+                        }
+                        return List.generate(
+                          widget.destinations.length,
+                          (i) {
+                            final dest = widget.destinations[i];
                           final isSelected = i == selectedIndex;
 
                           final states = <WidgetState>{
@@ -348,9 +354,10 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
                             ),
                           );
                         },
-                      ),
-                    ),
-                  ],
+                      );
+                    }(),
+                  ),
+                ],
                 ),
               ),
             ),
@@ -362,7 +369,8 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
 
   // ── Keyboard navigation ───────────────────────────────────────
 
-  final List<WidgetStatesController?> _tabStatesControllers = [];
+  final List<WidgetStatesController?> _tabStatesControllers =
+      List.filled(0, null, growable: true);
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {

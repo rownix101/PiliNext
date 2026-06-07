@@ -94,7 +94,7 @@ abstract final class ThemeUtils {
       popupMenuTheme: PopupMenuThemeData(
         surfaceTintColor: isDynamic ? colorScheme.onSurfaceVariant : null,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         elevation: 1,
         margin: EdgeInsets.zero,
         surfaceTintColor: null,
@@ -158,23 +158,23 @@ abstract final class ThemeUtils {
           },
         ),
       ),
-      pageTransitionsTheme: PageTransitionsTheme(
+      pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: const _SpringPageTransitionsBuilder(),
+          TargetPlatform.android: _SpringPageTransitionsBuilder(),
         },
       ),
       // ── M3 Expressive component themes ──────────────────────
       searchBarTheme: SearchBarThemeData(
         backgroundColor: WidgetStatePropertyAll(colorScheme.surface),
-        surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
-        elevation: WidgetStatePropertyAll(2),
+        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        elevation: const WidgetStatePropertyAll(2),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
         ),
-        padding: WidgetStatePropertyAll(
-          const EdgeInsets.symmetric(horizontal: 8),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 8),
         ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
@@ -206,8 +206,8 @@ abstract final class ThemeUtils {
           ),
         ),
       ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: const ButtonStyle(
+      filledButtonTheme: const FilledButtonThemeData(
+        style: ButtonStyle(
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -218,8 +218,8 @@ abstract final class ThemeUtils {
           ),
         ),
       ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: const ButtonStyle(
+      outlinedButtonTheme: const OutlinedButtonThemeData(
+        style: ButtonStyle(
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(12)),

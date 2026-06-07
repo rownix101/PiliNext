@@ -101,7 +101,7 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         icon: Icons.hd,
         label: '默认视频画质 (WiFi)',
         selectedValue: _setting.get(SettingBoxKey.defaultVideoQa) ?? 0,
-        items: {
+        items: const {
           0: '自动',
           16: '360P',
           32: '480P',
@@ -115,7 +115,7 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         icon: Icons.signal_cellular_alt,
         label: '默认视频画质 (蜂窝)',
         selectedValue: _setting.get(SettingBoxKey.defaultVideoQaCellular) ?? 0,
-        items: {
+        items: const {
           0: '自动',
           16: '360P',
           32: '480P',
@@ -123,17 +123,17 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         },
         onChanged: (v) => _setting.put(SettingBoxKey.defaultVideoQaCellular, v),
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.headphones,
         label: '后台播放',
         storageKey: SettingBoxKey.enableBackgroundPlay,
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.picture_in_picture,
         label: '自动画中画',
         storageKey: SettingBoxKey.autoPiP,
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.skip_next,
         label: 'SponsorBlock 自动跳过',
         storageKey: SettingBoxKey.enableSponsorBlock,
@@ -145,7 +145,7 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
 
   List<Widget> _danmakuSettings(ColorScheme cs) {
     return [
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.closed_caption,
         label: '弹幕开关',
         storageKey: SettingBoxKey.enableShowDanmaku,
@@ -239,7 +239,7 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         icon: Icons.reorder,
         label: '导航栏项目顺序',
         subtitle: '拖拽排序',
-        onTap: () => _showNavSortDialog(),
+        onTap: _showNavSortDialog,
       ),
       _DropdownTile<NavigationBarType>(
         icon: Icons.home,
@@ -285,18 +285,18 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
 
   List<Widget> _contentSettings(ColorScheme cs) {
     return [
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.public,
         label: '推荐来源 (App 端)',
         subtitle: '关闭使用 WEB 端推荐',
         storageKey: SettingBoxKey.appRcmd,
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.playlist_play,
         label: '视频页显示相关视频',
         storageKey: SettingBoxKey.showRelatedVideo,
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.comment,
         label: '视频页显示评论',
         storageKey: SettingBoxKey.showVideoReply,
@@ -348,12 +348,12 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
 
   List<Widget> _privacySettings(ColorScheme cs) {
     return [
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.history,
         label: '搜索历史记录',
         storageKey: SettingBoxKey.recordSearchHistory,
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.lightbulb,
         label: '搜索建议',
         storageKey: SettingBoxKey.searchSuggestion,
@@ -371,17 +371,17 @@ class _SimplifiedSettingsPageState extends State<SimplifiedSettingsPage> {
         subtitle: '${(_setting.get(SettingBoxKey.maxCacheSize) ?? 500)} MB',
         onTap: () {},
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.auto_delete,
         label: '自动清除缓存',
         storageKey: SettingBoxKey.autoClearCache,
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.vibration,
         label: '触觉反馈',
         storageKey: SettingBoxKey.feedBackEnable,
       ),
-      _SwitchTile(
+      const _SwitchTile(
         icon: Icons.system_update,
         label: '检查更新',
         storageKey: SettingBoxKey.autoUpdate,
