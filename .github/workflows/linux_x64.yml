@@ -112,30 +112,32 @@ jobs:
           RPM_BUILD_ROOT="$PWD/rpm_build"
           mkdir -p "$RPM_BUILD_ROOT/BUILD" "$RPM_BUILD_ROOT/RPMS" "$RPM_BUILD_ROOT/SOURCES" "$RPM_BUILD_ROOT/SPECS" "$RPM_BUILD_ROOT/SRPMS"
 
+          RPM_VERSION=$(echo "${{ env.version }}" | tr '-' '_')
+
           printf "准备源码归档（仅包含运行时与元数据）...\n"
           DATE="$(date '+%a %b %d %Y')"
-          SRC_DIR="$PWD/pilinext-${{ env.version }}"
+          SRC_DIR="$PWD/pilinext-$RPM_VERSION"
           mkdir -p "$SRC_DIR/bundle" "$SRC_DIR/assets"
           cp -r build/linux/x64/release/bundle/* "$SRC_DIR/bundle/"
           cp assets/linux/com.example.pilinext.desktop "$SRC_DIR/assets/com.example.pilinext.desktop"
           cp assets/images/logo/logo.png "$SRC_DIR/assets/pilinext.png"
-          tar -zcvf "$RPM_BUILD_ROOT/SOURCES/pilinext-${{ env.version }}.tar.gz" -C "$PWD" "pilinext-${{ env.version }}"
+          tar -zcvf "$RPM_BUILD_ROOT/SOURCES/pilinext-$RPM_VERSION.tar.gz" -C "$PWD" "pilinext-$RPM_VERSION"
 
           printf "生成 spec 文件...\n"
           cat > "$RPM_BUILD_ROOT/SPECS/pilinext.spec" <<EOF
           Name:           pilinext
-          Version:        ${{ env.version }}
+          Version:        $RPM_VERSION
           Release:        1%{?dist}
           Summary:        PiliNext Linux Version
           License:        GPL-3.0
-          Source0:        pilinext-${{ env.version }}.tar.gz
+          Source0:        pilinext-$RPM_VERSION.tar.gz
           Requires:       desktop-file-utils, hicolor-icon-theme
 
           %description
           使用 Flutter 开发的 BiliBili 第三方客户端
 
           %prep
-          %setup -q -n pilinext-${{ env.version }}
+          %setup -q -n pilinext-$RPM_VERSION
 
           %build
 
@@ -170,7 +172,7 @@ jobs:
           /usr/share/icons/hicolor/512x512/apps/pilinext.png
 
           %changelog
-          * DATE - ${{ env.version }}-1
+          * DATE - $RPM_VERSION-1
           - Initial RPM release
           EOF
 
