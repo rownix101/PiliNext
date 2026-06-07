@@ -136,6 +136,9 @@ void main() async {
   RequestUtils.syncHistoryStatus();
 
   SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);
+  SmartDialog.config.loading = SmartConfigLoading(
+    maskColor: Colors.transparent,
+  );
 
   if (PlatformUtils.isMobile) {
     SystemChrome.setEnabledSystemUIMode(.edgeToEdge);

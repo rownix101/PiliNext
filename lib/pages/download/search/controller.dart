@@ -56,24 +56,27 @@ class DownloadSearchController
       title: const Text('确定删除选中视频？'),
       onConfirm: () async {
         SmartDialog.showLoading();
-        final allChecked = this.allChecked.toSet();
-        for (final entry in allChecked) {
-          await GStorage.watchProgress.delete(entry.cid.toString());
-          await _downloadService.deleteDownload(
-            entry: entry,
-            removeList: true,
-            refresh: false,
-          );
+        try {
+          final allChecked = this.allChecked.toSet();
+          for (final entry in allChecked) {
+            await GStorage.watchProgress.delete(entry.cid.toString());
+            await _downloadService.deleteDownload(
+              entry: entry,
+              removeList: true,
+              refresh: false,
+            );
+          }
+          loadingState
+            ..value.data!.removeWhere(allChecked.contains)
+            ..refresh();
+          _downloadService.flagNotifier.refresh();
+          if (enableMultiSelect.value) {
+            rxCount.value = 0;
+            enableMultiSelect.value = false;
+          }
+        } finally {
+          SmartDialog.dismiss(status: SmartStatus.loading);
         }
-        loadingState
-          ..value.data!.removeWhere(allChecked.contains)
-          ..refresh();
-        _downloadService.flagNotifier.refresh();
-        if (enableMultiSelect.value) {
-          rxCount.value = 0;
-          enableMultiSelect.value = false;
-        }
-        SmartDialog.dismiss();
       },
     );
   }

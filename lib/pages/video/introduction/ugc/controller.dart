@@ -496,15 +496,15 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
         }
       }
 
+      await videoDetailCtr.plPlayerController.pause();
       videoDetailCtr
-        ..plPlayerController.pause()
         ..makeHeartBeat()
         ..updateMediaListHistory(aid)
         ..onReset(isStein: isStein)
         ..bvid = bvid
         ..aid = aid
-        ..cid.value = cid
-        ..queryVideoUrl();
+        ..cid.value = cid;
+      await videoDetailCtr.queryVideoUrl();
 
       if (this.bvid != bvid) {
         reload = true;

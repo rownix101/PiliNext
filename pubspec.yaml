@@ -175,6 +175,16 @@ dependencies:
       ref: main
 
 dependency_overrides:
+  cached_network_image_platform_interface_ce:
+    git:
+      url: https://github.com/bggRGjQaUbCoE/flutter_cached_network_image_ce.git
+      path: cached_network_image_platform_interface
+      ref: develop
+  cached_network_image_web_ce:
+    git:
+      url: https://github.com/bggRGjQaUbCoE/flutter_cached_network_image_ce.git
+      path: cached_network_image_web
+      ref: develop
   flutter_inappwebview_android:
     git:
       url: https://github.com/bggRGjQaUbCoE/flutter_inappwebview.git
