@@ -114,15 +114,15 @@ Widget buildSeekPreviewWidget(
         final posMs = (ratio * totalMs).round();
         final timeStr = DurationUtils.formatDuration(posMs ~/ 1000);
 
-        return AnimatedSwitcher(
-          duration: FluidTokens.durationSm,
-          switchInCurve: FluidTokens.curveEnter,
-          switchOutCurve: FluidTokens.curveExit,
-          child: Positioned(
-            key: ValueKey(index),
-            left: left,
-            bottom: _kProgressBarOffset,
+        return Positioned(
+          left: left,
+          bottom: _kProgressBarOffset,
+          child: AnimatedSwitcher(
+            duration: FluidTokens.durationSm,
+            switchInCurve: FluidTokens.curveEnter,
+            switchOutCurve: FluidTokens.curveExit,
             child: Column(
+              key: ValueKey(index),
               mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
@@ -516,7 +516,9 @@ class _RenderVideoTime extends RenderBox {
   @override
   void describeSemanticsConfiguration(SemanticsConfiguration config) {
     super.describeSemanticsConfiguration(config);
-    config.label = 'position:$_position\nduration:$_duration';
+    config
+      ..textDirection = TextDirection.ltr
+      ..label = 'position:$_position\nduration:$_duration';
   }
 
   @override

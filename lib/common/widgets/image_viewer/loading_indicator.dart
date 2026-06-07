@@ -124,6 +124,7 @@ class RenderLoadingIndicator extends RenderBox {
   void describeSemanticsConfiguration(SemanticsConfiguration config) {
     super.describeSemanticsConfiguration(config);
     config
+      ..textDirection = TextDirection.ltr
       ..role = .progressBar
       ..minValue = '0'
       ..maxValue = '100'

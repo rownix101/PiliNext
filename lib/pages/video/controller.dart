@@ -711,7 +711,7 @@ class VideoDetailController extends GetxController
     _autoPlay.value = true;
     playedTime = plPlayerController.position;
     plPlayerController
-      ..isBuffering.value = false
+      ..isBuffering.value = true
       ..buffered.value = Duration.zero;
 
     final video = findVideoByQa(currentVideoQa.code);

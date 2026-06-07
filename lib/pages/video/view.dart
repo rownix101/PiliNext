@@ -292,7 +292,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   }
 
   /// 未开启自动播放时触发播放
-  Future<void>? handlePlay() {
+  Future<void>? handlePlay() async {
     videoDetailController.autoPlay = true;
     if (!videoDetailController.isFileSource) {
       if (videoDetailController.isQuerying) {
@@ -315,7 +315,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       ..addPositionListener(positionListener);
     if (plPlayerController.preInitPlayer) {
       if (plPlayerController.autoEnterFullScreen) {
-        plPlayerController.triggerFullScreen();
+        await plPlayerController.triggerFullScreen();
       }
       return plPlayerController.play();
     } else {

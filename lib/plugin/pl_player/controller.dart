@@ -612,8 +612,7 @@ class PlPlayerController with BlockConfigMixin {
   bool get isFileSource => dataSource is FileSource;
 
   late final _audioNormalization = Pref.audioNormalization;
-  late final enableAudioNormalization =
-      Platform.isAndroid && _audioNormalization != '0';
+  late final enableAudioNormalization = _audioNormalization != '0';
   late final String _audioNormalizationParam =
       AudioNormalization.getParamFromConfig(_audioNormalization);
 
@@ -826,7 +825,7 @@ class PlPlayerController with BlockConfigMixin {
     Duration? seekTo,
     Volume? volume,
   ) async {
-    isBuffering.value = false;
+    isBuffering.value = true;
     buffered.value = Duration.zero;
     _heartDuration = 0;
     position = Duration.zero;
@@ -876,10 +875,7 @@ class PlPlayerController with BlockConfigMixin {
                 )}',
           );
         } else {
-          audioNormalization = _audioNormalizationParam.replaceFirst(
-            loudnormRegExp,
-            AudioNormalization.getParamFromConfig(Pref.fallbackNormalization),
-          );
+          audioNormalization = _audioNormalizationParam;
         }
         if (audioNormalization.isNotEmpty) {
           extras['lavfi-complex'] = '"[aid1] $audioNormalization [ao]"';
@@ -933,8 +929,11 @@ class PlPlayerController with BlockConfigMixin {
 
     // 自动播放
     if (_autoPlay) {
-      playIfExists();
-      // await play(duration: duration);
+      try {
+        await playIfExists();
+      } catch (e) {
+        dataStatus.value = DataStatus.error;
+      }
     }
   }
 
@@ -1038,7 +1037,16 @@ class PlPlayerController with BlockConfigMixin {
           if (event.startsWith('tcp: ffurl_read returned ') ||
               event.startsWith("Failed to open https://") ||
               event.startsWith("Can not open external file https://")) {
-            Future.delayed(const Duration(milliseconds: 3000), refreshPlayer);
+            EasyThrottle.throttle(
+              'controllerStream.error.listen.live',
+              const Duration(milliseconds: 10000),
+              () {
+                Future.delayed(
+                  const Duration(milliseconds: 3000),
+                  refreshPlayer,
+                );
+              },
+            );
           }
           return;
         }

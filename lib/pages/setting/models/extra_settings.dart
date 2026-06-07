@@ -42,7 +42,6 @@ import 'package:PiliNext/utils/storage_pref.dart';
 import 'package:PiliNext/utils/update.dart';
 import 'package:PiliNext/utils/utils.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart' hide RefreshIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -273,25 +272,17 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
     needReboot: true,
   ),
-  if (kDebugMode || Platform.isAndroid)
-    NormalModel(
-      title: '音量均衡',
-      leading: const Icon(Icons.multitrack_audio),
-      getSubtitle: () {
-        final audioNormalization = AudioNormalization.getTitleFromConfig(
-          Pref.audioNormalization,
-        );
-        String fallback = Pref.fallbackNormalization;
-        if (fallback == '0') {
-          fallback = '';
-        } else {
-          fallback =
-              '，无参数时:「${AudioNormalization.getTitleFromConfig(fallback)}」';
-        }
-        return '当前:「$audioNormalization」$fallback';
-      },
-      onTap: audioNormalization,
-    ),
+  NormalModel(
+    title: '音量均衡',
+    leading: const Icon(Icons.multitrack_audio),
+    getSubtitle: () {
+      final audioNormalization = AudioNormalization.getTitleFromConfig(
+        Pref.audioNormalization,
+      );
+      return '当前:「$audioNormalization」';
+    },
+    onTap: audioNormalization,
+  ),
   NormalModel(
     title: '超分辨率',
     leading: const Icon(Icons.stay_current_landscape_outlined),
@@ -640,10 +631,9 @@ Future<void> audioNormalization(
           : Pref.audioNormalization;
       Set<String> values = {
         '0',
+        '2',
         '1',
-        if (!fallback) '2',
-        audioNormalization,
-        '3',
+        if (!{'0', '1', '2'}.contains(audioNormalization)) audioNormalization,
       };
       return SelectDialog<String>(
         title: fallback ? '服务器无loudnorm配置时使用' : '音量均衡',
@@ -657,8 +647,7 @@ Future<void> audioNormalization(
                   '0' => AudioNormalization.disable.title,
                   '1' => AudioNormalization.dynaudnorm.title,
                   '2' => AudioNormalization.loudnorm.title,
-                  '3' => AudioNormalization.custom.title,
-                  _ => e,
+                  _ => AudioNormalization.custom.title,
                 },
               ),
             )
@@ -709,9 +698,6 @@ Future<void> audioNormalization(
       );
     } else {
       GStorage.setting.put(key, res);
-      if (res == '2') {
-        audioNormalization(context, setState, fallback: true);
-      }
       setState();
     }
   }
