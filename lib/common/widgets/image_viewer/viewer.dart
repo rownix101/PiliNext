@@ -20,6 +20,7 @@ import 'dart:math' as math;
 import 'package:PiliNext/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart'
     show touchSlopH;
 import 'package:PiliNext/common/widgets/gesture/image_horizontal_drag_gesture_recognizer.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/utils/extension/num_ext.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/foundation.dart';
@@ -110,7 +111,7 @@ class _ViewerState extends State<Viewer> with SingleTickerProviderStateMixin {
   late Offset _positionFrom, _positionTo;
 
   void _listener() {
-    final t = Curves.easeOut.transform(_animationController.value);
+    final t = FluidTokens.curveEnter.transform(_animationController.value);
     _scale = t.lerp(_scaleFrom, _scaleTo);
     _position = Offset.lerp(_positionFrom, _positionTo, t)!;
     setState(() {});
@@ -146,7 +147,7 @@ class _ViewerState extends State<Viewer> with SingleTickerProviderStateMixin {
 
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: FluidTokens.durationLg,
     )..addListener(_listener);
 
     _doubleTapGestureRecognizer = widget.doubleTapGestureRecognizer;
@@ -257,7 +258,7 @@ class _ViewerState extends State<Viewer> with SingleTickerProviderStateMixin {
     _positionTo = position;
 
     _animationController
-      ..duration = const Duration(milliseconds: 300)
+      ..duration = FluidTokens.durationLg
       ..forward(from: 0);
   }
 

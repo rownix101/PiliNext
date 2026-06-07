@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/models/dynamics/result.dart';
 import 'package:PiliNext/pages/dynamics_repost/view.dart';
 import 'package:PiliNext/utils/num_utils.dart';
@@ -104,7 +105,7 @@ class ActionPanel extends StatelessWidget {
                 icon: likeIcon,
                 style: btnStyle,
                 label: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
+                  duration: FluidTokens.durationLg,
                   transitionBuilder: (child, animation) =>
                       ScaleTransition(scale: animation, child: child),
                   child: Text(

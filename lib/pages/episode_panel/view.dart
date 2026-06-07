@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/badge.dart';
@@ -141,7 +142,7 @@ class _EpisodePanelState extends State<EpisodePanel>
     if (_currentTabIndex.value != widget.initialTabIndex) {
       _tabController.animateTo(
         widget.initialTabIndex,
-        duration: const Duration(milliseconds: 200),
+        duration: FluidTokens.durationMd,
       );
       Future.delayed(const Duration(milliseconds: 300), jumpToCurrent);
     } else {
@@ -618,7 +619,7 @@ class _EpisodePanelState extends State<EpisodePanel>
       top ^ _isReversed[tabIndex]
           ? 0
           : _calcItemOffset(_getCurrEpisodes.length),
-      duration: const Duration(milliseconds: 200),
+      duration: FluidTokens.durationMd,
     );
   }
 
@@ -664,7 +665,7 @@ class _EpisodePanelState extends State<EpisodePanel>
             }
             _itemScrollController[widget.initialTabIndex].animTo(
               _calcItemOffset(_currentItemIndex),
-              duration: const Duration(milliseconds: 200),
+              duration: FluidTokens.durationMd,
             );
           },
         ),

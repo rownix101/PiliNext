@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/widgets/custom_icon.dart';
 import 'package:PiliNext/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliNext/common/widgets/flutter/text_field/controller.dart';
@@ -43,6 +44,16 @@ class _DynamicDetailPageState extends CommonDynPageState<DynamicDetailPage> {
   dynamic get arguments => {
     'item': controller.dynItem,
   };
+
+  bool _showContent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _showContent = true);
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -198,7 +209,7 @@ class _DynamicDetailPageState extends CommonDynPageState<DynamicDetailPage> {
       ),
       onSuccess: () {
         Future.delayed(
-          const Duration(milliseconds: 500),
+          FluidTokens.durationXxl,
           () async {
             if (!mounted) return;
             final res = await DynamicsHttp.dynamicDetail(id: item.idStr);
@@ -222,7 +233,7 @@ class _DynamicDetailPageState extends CommonDynPageState<DynamicDetailPage> {
           final showTitle = controller.showTitle.value;
           return AnimatedOpacity(
             opacity: showTitle ? 1 : 0,
-            duration: const Duration(milliseconds: 300),
+            duration: FluidTokens.durationLg,
             child: IgnorePointer(
               ignoring: !showTitle,
               child: AuthorPanel(
@@ -253,13 +264,15 @@ class _DynamicDetailPageState extends CommonDynPageState<DynamicDetailPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: DynamicPanel(
-                item: controller.dynItem,
-                isDetail: true,
-                isDetailPortraitW: isPortrait,
-                onSetPubSetting: controller.onSetPubSetting,
-                onEdit: _onEdit,
-                onSetReplySubject: controller.onSetReplySubject,
+              child: _wrapEntrance(
+                DynamicPanel(
+                  item: controller.dynItem,
+                  isDetail: true,
+                  isDetailPortraitW: isPortrait,
+                  onSetPubSetting: controller.onSetPubSetting,
+                  onEdit: _onEdit,
+                  onSetReplySubject: controller.onSetReplySubject,
+                ),
               ),
             ),
             buildReplyHeader(theme),
@@ -285,13 +298,15 @@ class _DynamicDetailPageState extends CommonDynPageState<DynamicDetailPage> {
                     bottom: this.padding.bottom + 100,
                   ),
                   sliver: SliverToBoxAdapter(
-                    child: DynamicPanel(
-                      item: controller.dynItem,
-                      isDetail: true,
-                      isDetailPortraitW: isPortrait,
-                      onSetPubSetting: controller.onSetPubSetting,
-                      onEdit: _onEdit,
-                      onSetReplySubject: controller.onSetReplySubject,
+                    child: _wrapEntrance(
+                      DynamicPanel(
+                        item: controller.dynItem,
+                        isDetail: true,
+                        isDetailPortraitW: isPortrait,
+                        onSetPubSetting: controller.onSetPubSetting,
+                        onEdit: _onEdit,
+                        onSetReplySubject: controller.onSetReplySubject,
+                      ),
                     ),
                   ),
                 ),
@@ -458,6 +473,30 @@ class _DynamicDetailPageState extends CommonDynPageState<DynamicDetailPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _wrapEntrance(Widget child) {
+    return StaggerAnimation(
+      visible: _showContent,
+      tracks: const [
+        StaggerTrack(duration: FluidTokens.durationSm),
+        StaggerTrack(
+          duration: FluidTokens.durationMd,
+          delay: Duration(milliseconds: 40),
+          begin: 1.0,
+          end: 0.0,
+        ),
+      ],
+      builder: (context, values, _) {
+        return Opacity(
+          opacity: values[0],
+          child: Transform.translate(
+            offset: Offset(0, values[1] * FluidTokens.contentEnterDy),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

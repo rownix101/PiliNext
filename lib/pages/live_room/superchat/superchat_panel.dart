@@ -1,6 +1,7 @@
 import 'package:PiliNext/models/common/super_chat_type.dart';
 import 'package:PiliNext/pages/live_room/controller.dart';
 import 'package:PiliNext/pages/live_room/superchat/superchat_card.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/pages/search/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
@@ -20,7 +21,7 @@ class SuperChatPanel extends StatefulWidget {
 class _SuperChatPanelState extends DebounceStreamState<SuperChatPanel, bool>
     with AutomaticKeepAliveClientMixin {
   @override
-  Duration get duration => const Duration(milliseconds: 300);
+  Duration get duration => FluidTokens.durationLg;
 
   late final persistentSC =
       widget.controller.superChatType == SuperChatType.persist;

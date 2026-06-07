@@ -12,6 +12,7 @@ import 'package:PiliNext/pages/later/base_controller.dart';
 import 'package:PiliNext/pages/later/controller.dart';
 import 'package:PiliNext/utils/accounts.dart';
 import 'package:PiliNext/utils/extension/get_ext.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliNext/utils/request_utils.dart';
 import 'package:flutter/material.dart' hide TabBarView;
@@ -85,7 +86,7 @@ class _LaterPageState extends State<LaterPage>
                         offset: _baseCtr.isPlayAll.value
                             ? Offset.zero
                             : const Offset(0.75, 0),
-                        duration: const Duration(milliseconds: 120),
+                        duration: FluidTokens.durationXs,
                         child: GestureDetector(
                           onHorizontalDragDown: (details) =>
                               _baseCtr.dx = details.localPosition.dx,

@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/constants.dart';
 import 'package:PiliNext/common/style.dart';
@@ -83,10 +84,10 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     const expandTheme = ExpandableThemeData(
-      animationDuration: Duration(milliseconds: 300),
-      scrollAnimationDuration: Duration(milliseconds: 300),
+      animationDuration: FluidTokens.durationLg,
+      scrollAnimationDuration: FluidTokens.durationLg,
       crossFadePoint: 0,
-      fadeCurve: Curves.ease,
+      fadeCurve: FluidTokens.curveStandard,
       sizeCurve: Curves.linear,
     );
     final isPortrait = widget.isPortrait;

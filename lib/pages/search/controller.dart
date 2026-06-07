@@ -14,11 +14,12 @@ import 'package:PiliNext/utils/storage.dart';
 import 'package:PiliNext/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:get/get.dart';
 import 'package:stream_transform/stream_transform.dart';
 
 mixin DebounceStreamMixin<T> {
-  final Duration duration = const Duration(milliseconds: 200);
+  final Duration duration = FluidTokens.durationMd;
   StreamController<T>? ctr;
   StreamSubscription<T>? _sub;
   void onValueChanged(T value);

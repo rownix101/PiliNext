@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/models/common/image_type.dart';
@@ -14,8 +15,8 @@ class NetworkImgLayer extends StatelessWidget {
     required this.width,
     required this.height,
     this.type = .def,
-    this.fadeOutDuration = const Duration(milliseconds: 120),
-    this.fadeInDuration = const Duration(milliseconds: 120),
+    this.fadeOutDuration = FluidTokens.durationXs,
+    this.fadeInDuration = FluidTokens.durationXs,
     this.quality = 1,
     this.borderRadius = Style.mdRadius,
     this.getPlaceHolder,

@@ -1,5 +1,5 @@
 <div align="center">
-    <img width="200" height="200" src="assets/images/logo/logo.png">
+    <img width="200" height="200" src="assets/images/logo/pilinext_icon.png">
 </div>
 
 

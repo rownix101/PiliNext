@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/flutter/draggable_scrollable_sheet.dart';
 import 'package:PiliNext/common/widgets/flutter/text_field/text_field.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
@@ -131,8 +132,8 @@ class _RepostPanelState extends CommonRichTextPubPageState<RepostPanel> {
         ? child()
         : AnimatedSize(
             alignment: Alignment.topCenter,
-            curve: Curves.ease,
-            duration: const Duration(milliseconds: 300),
+            curve: FluidTokens.curveStandard,
+            duration: FluidTokens.durationLg,
             child: child(),
           );
   }

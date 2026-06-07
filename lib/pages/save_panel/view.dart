@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/constants.dart';
 import 'package:PiliNext/common/style.dart';
@@ -50,10 +51,10 @@ class SavePanel extends StatefulWidget {
         pageBuilder: (context, animation, secondaryAnimation) {
           return SavePanel(upMid: upMid, item: item);
         },
-        transitionDuration: const Duration(milliseconds: 255),
+        transitionDuration: FluidTokens.durationMd,
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
-            opacity: animation.drive(CurveTween(curve: Curves.easeInOut)),
+            opacity: animation.drive(CurveTween(curve: FluidTokens.curveStandard)),
             child: child,
           );
         },
@@ -361,9 +362,9 @@ class _SavePanelState extends State<SavePanel> {
                   borderRadius: const .all(.circular(12)),
                 ),
                 child: AnimatedSize(
-                  curve: Curves.easeInOut,
+                  curve: FluidTokens.curveStandard,
                   alignment: .topCenter,
-                  duration: const Duration(milliseconds: 255),
+                  duration: FluidTokens.durationMd,
                   child: Column(
                     mainAxisSize: .min,
                     crossAxisAlignment: .start,

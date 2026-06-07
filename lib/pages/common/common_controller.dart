@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:PiliNext/http/loading_state.dart';
 import 'package:PiliNext/utils/extension/scroll_controller_ext.dart';
+import 'package:dio/dio.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/widgets.dart' show ScrollController;
 import 'package:get/get.dart';
@@ -36,6 +37,8 @@ abstract class CommonController<R, T> extends GetxController
   bool isLoading = false;
   Rx<LoadingState> get loadingState;
 
+  CancelToken cancelToken = CancelToken();
+
   Future<LoadingState<R>> customGetData();
 
   Future<void> queryData([bool isRefresh = true]);
@@ -58,11 +61,13 @@ abstract class CommonController<R, T> extends GetxController
   }
 
   Future<void> onReload() {
+    cancelToken = CancelToken();
     return onRefresh();
   }
 
   @override
   void onClose() {
+    cancelToken.cancel();
     scrollController.dispose();
     super.onClose();
   }

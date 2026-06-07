@@ -31,6 +31,12 @@ abstract final class FluidTokens {
   /// 380ms — heavier transitions such as fullscreen/player state changes.
   static const Duration durationXl = Duration(milliseconds: 380);
 
+  /// 500ms — full page transitions, launch/landing animations.
+  static const Duration durationXxl = Duration(milliseconds: 500);
+
+  /// 1000ms — deliberate slow reveals, skeleton shimmer cycles.
+  static const Duration durationSlow = Duration(milliseconds: 1000);
+
   /// Reduced-motion fallback duration: short enough to avoid spatial motion,
   /// long enough that state changes do not feel like visual glitches.
   static const Duration durationReduced = Duration(milliseconds: 80);

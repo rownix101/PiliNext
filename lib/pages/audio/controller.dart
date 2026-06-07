@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:PiliNext/common/constants.dart';
 import 'package:PiliNext/grpc/audio.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/grpc/bilibili/app/listener/v1.pb.dart'
     show
         DetailItem,
@@ -167,7 +168,7 @@ class AudioController extends GetxController
 
     animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: FluidTokens.durationMd,
     );
 
     if (shutdownTimerService.isActive) {

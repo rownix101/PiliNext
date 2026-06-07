@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show exit, Platform;
 import 'dart:math' as math;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/pages/common/common_intro_controller.dart';
 import 'package:PiliNext/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
@@ -77,7 +78,7 @@ class PlayerFocus extends StatelessWidget {
         plPlayerController
           ..longPressTimer?.cancel()
           ..longPressTimer = Timer.periodic(
-            const Duration(milliseconds: 150),
+            FluidTokens.durationSm,
             (_) => _setVolume(isIncrease: isIncrease),
           );
       }
@@ -122,7 +123,7 @@ class PlayerFocus extends StatelessWidget {
             plPlayerController
               ..longPressTimer?.cancel()
               ..longPressTimer = Timer(
-                const Duration(milliseconds: 200),
+                FluidTokens.durationMd,
                 () => plPlayerController
                   ..cancelLongPressTimer()
                   ..setLongPressStatus(true),

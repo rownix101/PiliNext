@@ -12,6 +12,7 @@ import 'package:PiliNext/common/widgets/flutter/pop_scope.dart';
 import 'package:PiliNext/common/widgets/flutter/text_field/controller.dart';
 import 'package:PiliNext/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/keep_alive_wrapper.dart';
 import 'package:PiliNext/common/widgets/route_aware_mixin.dart';
 import 'package:PiliNext/common/widgets/scroll_physics.dart';
@@ -897,7 +898,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
                                 return const SizedBox.shrink();
                               }
                               return AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 160),
+                                duration: FluidTokens.durationSm,
                                 transitionBuilder: (child, animation) {
                                   return ScaleTransition(
                                     scale: animation,
@@ -1112,7 +1113,7 @@ class _LiveDanmakuState extends State<LiveDanmaku> {
         opacity: plPlayerController.enableShowDanmaku.value
             ? plPlayerController.danmakuOpacity.value
             : 0,
-        duration: const Duration(milliseconds: 100),
+        duration: FluidTokens.durationInstant,
         child: DanmakuScreen<DanmakuExtra>(
           createdController: (e) {
             widget.liveRoomController.danmakuController =

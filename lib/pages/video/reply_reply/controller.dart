@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/grpc/bilibili/main/community/reply/v1.pb.dart'
     show ReplyInfo, DetailListReply, Mode;
 import 'package:PiliNext/grpc/reply.dart';
@@ -41,7 +42,7 @@ class VideoReplyReplyController extends ReplyController
 
   AnimationController? _controller;
   AnimationController get animController => _controller ??= AnimationController(
-    duration: const Duration(milliseconds: 1000),
+    duration: FluidTokens.durationSlow,
     vsync: this,
   );
 

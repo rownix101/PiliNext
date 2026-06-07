@@ -174,6 +174,11 @@ class MainController extends GetxController
 
     final res = await Future.wait([_msgUnread(), _msgFeedUnread()]);
 
+    if (!accountService.isLogin.value) {
+      msgUnReadCount.value = '';
+      return;
+    }
+
     final count = res.sum;
 
     final countStr = count == 0
@@ -345,8 +350,10 @@ class MainController extends GetxController
   void onChangeAccount(bool isLogin) {
     if (isLogin) {
       getUnreadDynamic();
+      queryUnreadMsg();
     } else {
       setDynCount();
+      msgUnReadCount.value = '';
     }
   }
 }

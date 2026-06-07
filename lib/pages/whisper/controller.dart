@@ -4,13 +4,18 @@ import 'package:PiliNext/grpc/im.dart';
 import 'package:PiliNext/http/loading_state.dart';
 import 'package:PiliNext/models_new/msg/msgfeed_unread.dart';
 import 'package:PiliNext/pages/common/common_whisper_controller.dart';
+import 'package:PiliNext/services/account_service.dart';
 import 'package:PiliNext/utils/storage_pref.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:protobuf/protobuf.dart' show PbMap;
 
-class WhisperController extends CommonWhisperController<SessionMainReply> {
+class WhisperController extends CommonWhisperController<SessionMainReply>
+    with AccountMixin {
+  @override
+  final AccountService accountService = Get.find<AccountService>();
+
   @override
   SessionPageType sessionPageType = SessionPageType.SESSION_PAGE_TYPE_HOME;
 
@@ -43,7 +48,7 @@ class WhisperController extends CommonWhisperController<SessionMainReply> {
         name: "收到的赞",
         icon: Icons.favorite_border_outlined,
         route: "/likeMe",
-        enabled: !Pref.disableLikeMsg,
+        enabled: !accountService.isLogin.value || !Pref.disableLikeMsg,
       ),
       const (
         name: "系统通知",
@@ -53,11 +58,16 @@ class WhisperController extends CommonWhisperController<SessionMainReply> {
       ),
     ];
     unreadCounts = List.filled(msgFeedTopItems.length, 0).obs;
-    queryMsgFeedUnread();
-    queryData();
+    if (accountService.isLogin.value) {
+      queryMsgFeedUnread();
+      queryData();
+    } else {
+      loadingState.value = const Error('账号未登录');
+    }
   }
 
   Future<void> queryMsgFeedUnread() async {
+    if (!accountService.isLogin.value) return;
     final res = await ImGrpc.getTotalUnread(unreadType: 2);
     if (res case Success(:final response)) {
       final data = MsgFeedUnread.fromJson(response.msgFeedUnread.unread);
@@ -90,13 +100,31 @@ class WhisperController extends CommonWhisperController<SessionMainReply> {
   }
 
   @override
-  Future<LoadingState<SessionMainReply>> customGetData() =>
-      ImGrpc.sessionMain(offset: offset);
+  Future<LoadingState<SessionMainReply>> customGetData() {
+    if (!accountService.isLogin.value) {
+      return Future.value(const Error('账号未登录'));
+    }
+    return ImGrpc.sessionMain(offset: offset);
+  }
 
   @override
   Future<void> onRefresh() {
+    if (!accountService.isLogin.value) return Future.value();
     offset = null;
     queryMsgFeedUnread();
     return super.onRefresh();
+  }
+
+  @override
+  void onChangeAccount(bool isLogin) {
+    offset = null;
+    unreadCounts.fillRange(0, unreadCounts.length, 0);
+    if (isLogin) {
+      loadingState.value = LoadingState<List<Session>?>.loading();
+      queryMsgFeedUnread();
+      queryData();
+    } else {
+      loadingState.value = const Error('账号未登录');
+    }
   }
 }

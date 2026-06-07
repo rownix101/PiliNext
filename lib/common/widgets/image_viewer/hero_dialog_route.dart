@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// https://github.com/qq326646683/interactiveviewer_gallery
@@ -23,7 +24,7 @@ class HeroDialogRoute<T> extends PageRoute<T> {
   String? get barrierLabel => null;
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 300);
+  Duration get transitionDuration => FluidTokens.durationLg;
 
   @override
   bool get maintainState => true;
@@ -39,7 +40,7 @@ class HeroDialogRoute<T> extends PageRoute<T> {
     Widget child,
   ) {
     return FadeTransition(
-      opacity: animation.drive(CurveTween(curve: Curves.easeOut)),
+      opacity: animation.drive(CurveTween(curve: FluidTokens.curveEnter)),
       child: child,
     );
   }

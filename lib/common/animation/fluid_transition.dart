@@ -138,7 +138,9 @@ class _FluidTransitionState extends State<FluidTransition>
         ? widget.initialVelocity
         : inferredVelocity;
 
-    _controller.animateWith(
+    _controller
+      ..stop()
+      ..animateWith(
       FluidTokens.simulation(
         spring: _spring,
         from: _controller.value,
@@ -179,21 +181,21 @@ class _FluidTransitionState extends State<FluidTransition>
       );
     }
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _opacity.value.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: _offset.value,
-            child: Transform.scale(
-              scale: _scale.value,
+    return FadeTransition(
+      opacity: _opacity,
+      child: ScaleTransition(
+        scale: _scale,
+        child: AnimatedBuilder(
+          animation: _offset,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: _offset.value,
               child: child,
-            ),
-          ),
-        );
-      },
-      child: widget.child,
+            );
+          },
+          child: widget.child,
+        ),
+      ),
     );
   }
 }

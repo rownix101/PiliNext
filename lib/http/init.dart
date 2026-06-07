@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:PiliNext/http/api.dart';
+import 'package:PiliNext/http/circuit_breaker.dart';
 import 'package:PiliNext/http/constants.dart';
 import 'package:PiliNext/http/loading_state.dart';
+import 'package:PiliNext/http/request_deduplicator.dart';
 import 'package:PiliNext/http/retry_interceptor.dart';
 import 'package:PiliNext/http/user.dart';
 import 'package:PiliNext/utils/accounts.dart';
@@ -223,6 +225,17 @@ class Request {
       ..httpClientAdapter = _enableHttp2
           ? Http2Adapter(connectionManager, fallbackAdapter: h11)
           : h11;
+
+    dio.interceptors.add(RequestDeduplicator());
+
+    dio.interceptors.add(
+      CircuitBreakerInterceptor(
+        CircuitBreaker(
+          failureThreshold: 5,
+          resetTimeout: const Duration(seconds: 30),
+        ),
+      ),
+    );
 
     // 先于其他Interceptor
     if (Pref.retryCount != 0) {

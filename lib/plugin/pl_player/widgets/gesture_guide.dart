@@ -54,7 +54,7 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
     _fadeAnim = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: const Interval(0.0, 0.1, curve: Curves.easeOut)),
+          CurveTween(curve: const Interval(0.0, 0.1, curve: FluidTokens.curveEnter)),
         ),
         weight: 0.1,
       ),
@@ -66,7 +66,7 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
       ),
       TweenSequenceItem(
         tween: Tween(begin: 1.0, end: 0.0).chain(
-          CurveTween(curve: const Interval(0.85, 1.0, curve: Curves.easeIn)),
+          CurveTween(curve: const Interval(0.85, 1.0, curve: FluidTokens.curveExit)),
         ),
         weight: 0.15,
       ),
@@ -96,7 +96,7 @@ class _GestureGuideOverlayState extends State<GestureGuideOverlay>
         if (opacity <= 0.01) return child!;
         final contentProgress = reduceMotion
             ? opacity
-            : Curves.easeOutCubic.transform(opacity.clamp(0.0, 1.0));
+            : FluidTokens.curveEnter.transform(opacity.clamp(0.0, 1.0));
         return Stack(
           children: [
             child!,

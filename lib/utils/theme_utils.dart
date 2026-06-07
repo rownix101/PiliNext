@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/design/colors.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/utils/extension/theme_ext.dart';
@@ -110,14 +111,27 @@ abstract final class ThemeUtils {
           color: colorScheme.onSurface,
           fontWeight: fontWeight,
         ),
-        backgroundColor: colorScheme.surface,
+        backgroundColor: colorScheme.surface.withValues(alpha: 0.92),
+        surfaceTintColor: Colors.transparent,
         constraints: const BoxConstraints(minWidth: 280, maxWidth: 420),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: isDark
+                ? AppColors.darkOutlineVariant.withValues(alpha: 0.3)
+                : AppColors.lightOutlineVariant.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        elevation: 24,
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor: colorScheme.surface.withValues(alpha: 0.95),
+        surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: Style.bottomSheetRadius,
         ),
+        elevation: 16,
       ),
       // ignore: deprecated_member_use
       sliderTheme: const SliderThemeData(year2023: false),
@@ -144,10 +158,81 @@ abstract final class ThemeUtils {
           },
         ),
       ),
-      pageTransitionsTheme: const PageTransitionsTheme(
+      pageTransitionsTheme: PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: ZoomPageTransitionsBuilder(),
+          TargetPlatform.android: const _SpringPageTransitionsBuilder(),
         },
+      ),
+      // ── M3 Expressive component themes ──────────────────────
+      searchBarTheme: SearchBarThemeData(
+        backgroundColor: WidgetStatePropertyAll(colorScheme.surface),
+        surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+        elevation: WidgetStatePropertyAll(2),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+        ),
+        padding: WidgetStatePropertyAll(
+          const EdgeInsets.symmetric(horizontal: 8),
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
+        ),
+        backgroundColor: colorScheme.surfaceContainerHighest,
+        selectedColor: colorScheme.secondaryContainer,
+        labelStyle: TextStyle(color: colorScheme.onSurface),
+        secondaryLabelStyle: TextStyle(color: colorScheme.primary),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: const ButtonStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+          padding: WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: const ButtonStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+          padding: WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          ),
+        ),
+      ),
+      navigationDrawerTheme: NavigationDrawerThemeData(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
       ),
     );
 
@@ -156,6 +241,38 @@ abstract final class ThemeUtils {
     }
 
     return themeData;
+  }
+
+  /// Spring-based page transition builder — substitutes the default
+  /// Material zoom with a smooth slide+fade spring animation.
+  static Widget _springTransition(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (FluidTokens.reduceMotionOf(context)) {
+      return child;
+    }
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: FluidTokens.curveEnter,
+      reverseCurve: FluidTokens.curveExit,
+    );
+    return AnimatedBuilder(
+      animation: curved,
+      builder: (context, child) {
+        final value = curved.value;
+        return Opacity(
+          opacity: value.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(FluidTokens.navigationDx * (1 - value), 0),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
   }
 
   /// Apply pure-black darkening to a theme.
@@ -197,6 +314,26 @@ abstract final class ThemeUtils {
         surfaceContainerHigh: colorScheme.surfaceContainerHigh.darken(),
         surfaceContainerHighest: colorScheme.surfaceContainerHighest.darken(0.4),
       ),
+    );
+  }
+}
+
+class _SpringPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SpringPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T>? route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return ThemeUtils._springTransition(
+      context,
+      animation,
+      secondaryAnimation,
+      child,
     );
   }
 }

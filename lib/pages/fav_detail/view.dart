@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/button/icon_button.dart';
 import 'package:PiliNext/common/widgets/dialog/dialog.dart';
 import 'package:PiliNext/common/widgets/flutter/pop_scope.dart';
@@ -73,7 +74,7 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
                         offset: _favDetailController.isPlayAll.value
                             ? Offset.zero
                             : const Offset(0.75, 0),
-                        duration: const Duration(milliseconds: 120),
+                        duration: FluidTokens.durationXs,
                         child: GestureDetector(
                           onHorizontalDragDown: (details) =>
                               _favDetailController.dx =

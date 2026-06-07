@@ -1,4 +1,5 @@
 import 'package:PiliNext/common/widgets/flutter/popup_menu.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/gesture/tap_gesture_recognizer.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
 import 'package:PiliNext/http/live.dart';
@@ -172,14 +173,14 @@ class LiveRoomChatPanel extends StatelessWidget {
               final isEmpty = liveRoomController.superChatMsg.isEmpty;
               return AnimatedOpacity(
                 opacity: isEmpty ? 0 : 1,
-                duration: const Duration(milliseconds: 120),
+                duration: FluidTokens.durationXs,
                 child: GestureDetector(
                   onTap: isEmpty
                       ? null
                       : () => liveRoomController.pageController?.animateToPage(
                           1,
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeInOut,
+                          duration: FluidTokens.durationMd,
+                          curve: FluidTokens.curveStandard,
                         ),
                   child: Container(
                     decoration: BoxDecoration(

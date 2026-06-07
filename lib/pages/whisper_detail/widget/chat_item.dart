@@ -792,7 +792,7 @@ class ChatItem extends StatelessWidget {
     final String? url = content['jump_url'];
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = math.max(400.0, constraints.maxWidth);
+        final maxWidth = math.min(400.0, constraints.maxWidth);
         Widget child = ClipRRect(
           borderRadius: Style.mdRadius,
           child: CachedNetworkImage(

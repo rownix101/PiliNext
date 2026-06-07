@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/dial_prefix.dart';
 import 'package:PiliNext/common/widgets/button/icon_button.dart';
 import 'package:PiliNext/common/widgets/radio_widget.dart';
@@ -54,8 +55,19 @@ class LoginPageController extends GetxController
   @override
   void onInit() {
     super.onInit();
-    tabController = TabController(length: 4, vsync: this)
-      ..addListener(_handleTabChange);
+    tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: Get.parameters['source'] == 'messages' ? 2 : 0,
+    )..addListener(_handleTabChange);
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    if (tabController.index == 2) {
+      refreshQRCode();
+    }
   }
 
   @override
@@ -774,9 +786,9 @@ class LoginPageController extends GetxController
         actionsPadding: const .only(left: 16, right: 16, bottom: 10),
         content: SingleChildScrollView(
           child: AnimatedSize(
-            curve: Curves.easeIn,
+            curve: FluidTokens.curveExit,
             alignment: .topCenter,
-            duration: const Duration(milliseconds: 200),
+            duration: FluidTokens.durationMd,
             child: quickSelect
                 ? Builder(
                     builder: (context) => RadioGroup<Account>(

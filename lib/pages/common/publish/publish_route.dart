@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:flutter/material.dart';
 
 class PublishRoute<T> extends PopupRoute<T> {
@@ -6,7 +7,7 @@ class PublishRoute<T> extends PopupRoute<T> {
     this._barrierDismissible = true,
     this._barrierLabel,
     this._barrierColor = const Color(0x80000000),
-    this._transitionDuration = const Duration(milliseconds: 500),
+    this._transitionDuration = FluidTokens.durationXxl,
     this._transitionBuilder,
     super.settings,
   });

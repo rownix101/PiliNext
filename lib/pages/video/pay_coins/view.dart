@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:math' show max;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/widgets/scroll_physics.dart';
 import 'package:PiliNext/pages/common/publish/publish_route.dart';
@@ -46,7 +47,7 @@ class PayCoinsPage extends StatefulWidget {
             hasCopyright: hasCopyright,
           );
         },
-        transitionDuration: const Duration(milliseconds: 225),
+        transitionDuration: FluidTokens.durationMd,
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -119,7 +120,7 @@ class _PayCoinsPageState extends State<PayCoinsPage>
 
     _slide22Controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 50),
+      duration: FluidTokens.durationInstant,
     );
     _slide22Anim = _slide22Controller.drive(
       Tween<Offset>(
@@ -129,13 +130,13 @@ class _PayCoinsPageState extends State<PayCoinsPage>
     );
     _scale22Controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 50),
+      duration: FluidTokens.durationInstant,
       lowerBound: 1.0,
       upperBound: 1.1,
     );
     _coinController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: FluidTokens.durationLg,
     );
     _coinSlideAnim = _coinController.drive(
       Tween<Offset>(
@@ -151,7 +152,7 @@ class _PayCoinsPageState extends State<PayCoinsPage>
     );
     _boxAnimController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 50),
+      duration: FluidTokens.durationInstant,
     );
     _boxAnim = _boxAnimController.drive(
       Tween<Offset>(
@@ -181,8 +182,8 @@ class _PayCoinsPageState extends State<PayCoinsPage>
   void _onScroll(int index) {
     _controller?.animateToPage(
       index,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.ease,
+      duration: FluidTokens.durationMd,
+      curve: FluidTokens.curveStandard,
     );
     _scale();
   }

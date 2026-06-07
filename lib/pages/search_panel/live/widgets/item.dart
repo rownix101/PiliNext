@@ -4,6 +4,7 @@ import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
 import 'package:PiliNext/models/search/result.dart';
 import 'package:PiliNext/utils/num_utils.dart';
 import 'package:PiliNext/utils/page_utils.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -49,7 +50,7 @@ class LiveItem extends StatelessWidget {
                         bottom: 0,
                         child: AnimatedOpacity(
                           opacity: 1,
-                          duration: const Duration(milliseconds: 200),
+                          duration: FluidTokens.durationMd,
                           child: liveStat(
                             liveItem.online,
                             liveItem.cateName,

@@ -17,6 +17,7 @@
 
 import 'dart:math' as math;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/custom_height_widget.dart';
 import 'package:PiliNext/common/widgets/dynamic_sliver_app_bar/rendering/sliver_persistent_header.dart';
 import 'package:PiliNext/common/widgets/dynamic_sliver_app_bar/sliver_persistent_header.dart';
@@ -117,7 +118,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
         (shrinkOffset > maxExtent - minExtent);
     final effectiveTitle = AnimatedOpacity(
       opacity: isScrolledUnder ? 1 : 0,
-      duration: const Duration(milliseconds: 500),
+      duration: FluidTokens.durationXxl,
       curve: const Cubic(0.2, 0.0, 0.0, 1.0),
       child: title,
     );

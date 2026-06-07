@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/models_new/pgc/pgc_info_model/episode.dart';
 import 'package:PiliNext/models_new/pgc/pgc_info_model/new_ep.dart';
@@ -82,8 +83,8 @@ class _PgcPanelState extends State<PgcPanel> {
           listViewScrollCtr.position.minScrollExtent,
           listViewScrollCtr.position.maxScrollExtent,
         ),
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
+        duration: FluidTokens.durationXxl,
+        curve: FluidTokens.curveStandard,
       );
     });
   }

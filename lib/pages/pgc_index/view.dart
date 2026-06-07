@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliNext/common/widgets/loading_widget/loading_widget.dart';
@@ -74,9 +75,9 @@ class _PgcIndexPageState extends State<PgcIndexPage>
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 SliverToBoxAdapter(
                   child: AnimatedSize(
-                    curve: Curves.easeInOut,
+                    curve: FluidTokens.curveStandard,
                     alignment: Alignment.topCenter,
-                    duration: const Duration(milliseconds: 200),
+                    duration: FluidTokens.durationMd,
                     child: count > 5
                         ? Obx(() => _buildSortsWidget(theme, count, response))
                         : _buildSortsWidget(theme, count, response),

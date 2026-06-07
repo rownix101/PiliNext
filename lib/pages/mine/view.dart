@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/flutter/list_tile.dart';
@@ -443,7 +444,7 @@ class _MediaPageState extends CommonPageState<MinePage>
   }
 
   void _autoRefresh() => Future.delayed(
-    const Duration(milliseconds: 150),
+    FluidTokens.durationSm,
     () => controller.onRefresh(isManual: false),
   );
 

@@ -17,7 +17,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 # update when release
-version: 2.0.8+1
+version: 26.06.08-stable+1
 
 environment:
   sdk: ">=3.12.0"
@@ -238,15 +238,18 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: assets/images/logo/logo_2.png
-  image_path_android: assets/images/logo/logo_2.png
-  image_path_ios: assets/images/logo/logo.png
-  adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: assets/images/logo/logo_2.png
-  adaptive_icon_monochrome: assets/images/logo/logo_2.png
+  image_path: assets/images/logo/pilinext_icon.png
+  image_path_android: assets/images/logo/pilinext_icon.png
+  image_path_ios: assets/images/logo/pilinext_icon.png
+  adaptive_icon_background: "#FAF9F6"
+  adaptive_icon_foreground: assets/images/logo/pilinext_foreground.png
+  adaptive_icon_monochrome: assets/images/logo/pilinext_monochrome.png
   macos:
     generate: true
-    image_path: assets/images/logo/logo.png
+    image_path: assets/images/logo/pilinext_icon.png
+  windows:
+    generate: true
+    image_path: assets/images/logo/pilinext_icon.png
 
 flutter_native_splash:
   android_12:
@@ -254,8 +257,8 @@ flutter_native_splash:
     color_dark: "#212121"
   color: "#ffffff"
   color_dark: "#212121"
-  image: assets/images/logo/logo_2.png
-  image_dark: assets/images/logo/logo_2.png
+  image: assets/images/logo/pilinext_foreground.png
+  image_dark: assets/images/logo/pilinext_foreground.png
 
 flutter:
   uses-material-design: true

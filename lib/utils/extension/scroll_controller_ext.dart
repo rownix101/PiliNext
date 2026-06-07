@@ -1,11 +1,12 @@
-import 'package:flutter/widgets.dart' show ScrollController, Curves;
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
+import 'package:flutter/widgets.dart' show ScrollController;
 
 extension ScrollControllerExt on ScrollController {
   void animToTop() => animTo(0);
 
   void animTo(
     double offset, {
-    Duration duration = const Duration(milliseconds: 500),
+    Duration duration = FluidTokens.durationXxl,
   }) {
     if (!hasClients) return;
     if ((offset - this.offset).abs() >= position.viewportDimension * 7) {
@@ -14,7 +15,7 @@ extension ScrollControllerExt on ScrollController {
       animateTo(
         offset,
         duration: duration,
-        curve: Curves.easeInOut,
+        curve: FluidTokens.curveStandard,
       );
     }
   }

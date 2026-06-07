@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:flutter/material.dart';
 
@@ -8,7 +9,7 @@ Widget selectMask(
 }) {
   return AnimatedOpacity(
     opacity: checked ? 1 : 0,
-    duration: const Duration(milliseconds: 200),
+    duration: FluidTokens.durationMd,
     child: Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -17,8 +18,8 @@ Widget selectMask(
       ),
       child: AnimatedScale(
         scale: checked ? 1 : 0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
+        duration: FluidTokens.durationMd,
+        curve: FluidTokens.curveStandard,
         child: Container(
           width: 34,
           height: 34,

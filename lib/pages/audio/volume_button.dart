@@ -2,6 +2,7 @@ import 'dart:async' show Timer;
 import 'dart:math' as math;
 
 import 'package:PiliNext/common/widgets/flutter/vertical_slider.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/pages/audio/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderProxyBox, BoxHitTestResult;
@@ -43,7 +44,7 @@ class _VolumeButtonState extends State<VolumeButton> {
   }
 
   void _scheduleDismiss([_]) {
-    _timer ??= Timer(const Duration(milliseconds: 100), () {
+    _timer ??= Timer(FluidTokens.durationInstant, () {
       _controller.hide();
       _timer = null;
     });

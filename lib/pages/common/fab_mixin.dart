@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:flutter/material.dart';
 
 mixin BaseFabMixin<T extends StatefulWidget> on State<T>, TickerProvider {
@@ -8,7 +9,7 @@ mixin BaseFabMixin<T extends StatefulWidget> on State<T>, TickerProvider {
   AnimationController _initController() {
     return AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: FluidTokens.durationXs,
     );
   }
 
@@ -17,7 +18,7 @@ mixin BaseFabMixin<T extends StatefulWidget> on State<T>, TickerProvider {
       Tween<Offset>(
         begin: Offset.zero,
         end: const Offset(0.0, 1.0),
-      ).chain(CurveTween(curve: Curves.easeInOut)),
+      ).chain(CurveTween(curve: FluidTokens.curveStandard)),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:flutter/material.dart';
 
 class Skeleton extends StatefulWidget {
@@ -21,18 +22,13 @@ class _SkeletonState extends State<Skeleton>
   void initState() {
     super.initState();
     _controller = AnimationController.unbounded(vsync: this)
-      ..repeat(min: -0.5, max: 1.5, period: const Duration(milliseconds: 1000))
-      ..addListener(_setState);
+      ..repeat(min: -0.5, max: 1.5, period: FluidTokens.durationSlow);
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  void _setState() {
-    setState(() {});
   }
 
   @override
@@ -44,22 +40,30 @@ class _SkeletonState extends State<Skeleton>
   @override
   Widget build(BuildContext context) {
     final colors = [Colors.transparent, color, color, Colors.transparent];
-    return ShaderMask(
-      blendMode: BlendMode.srcATop,
-      shaderCallback: (Rect bounds) {
-        final width = bounds.width;
-        final height = bounds.height;
-        matrix[12] = width * _controller.value;
-        return ui.Gradient.linear(
-          Offset(0, 0.35 * height),
-          Offset(width, 0.95 * height),
-          colors,
-          const [0.1, 0.3, 0.5, 0.7],
-          TileMode.clamp,
-          matrix.storage,
-        );
-      },
-      child: widget.child,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return ShaderMask(
+            blendMode: BlendMode.srcATop,
+            shaderCallback: (Rect bounds) {
+              final width = bounds.width;
+              final height = bounds.height;
+              matrix[12] = width * _controller.value;
+              return ui.Gradient.linear(
+                Offset(0, 0.35 * height),
+                Offset(width, 0.95 * height),
+                colors,
+                const [0.1, 0.3, 0.5, 0.7],
+                TileMode.clamp,
+                matrix.storage,
+              );
+            },
+            child: child,
+          );
+        },
+        child: widget.child,
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/flutter/draggable_scrollable_sheet.dart';
 import 'package:PiliNext/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliNext/common/widgets/loading_widget/loading_widget.dart';
@@ -62,7 +63,7 @@ class _DynMentionPanelState
     extends DebounceStreamState<DynMentionPanel, String> {
   final _controller = Get.put(DynMentionController());
   @override
-  Duration get duration => const Duration(milliseconds: 300);
+  Duration get duration => FluidTokens.durationLg;
 
   @override
   void initState() {
@@ -206,7 +207,7 @@ class _DynMentionPanelState
                     offset: _controller.showBtn.value
                         ? Offset.zero
                         : const Offset(0, 3),
-                    duration: const Duration(milliseconds: 120),
+                    duration: FluidTokens.durationXs,
                     child: FloatingActionButton(
                       onPressed: () {
                         if (_controller.mentionList.isNullOrEmpty) {

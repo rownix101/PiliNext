@@ -518,6 +518,16 @@ class _LoginPageState extends State<LoginPage> {
         MediaQuery.viewPaddingOf(context).copyWith(top: 0) +
         const EdgeInsets.only(bottom: 25);
     final isLandscape = !MediaQuery.sizeOf(context).isPortrait;
+    final fromMessages = Get.parameters['source'] == 'messages';
+    final loginTabs = tabBarView(
+      controller: _loginPageCtr.tabController,
+      children: [
+        tabViewOuter(loginByPassword(theme)),
+        tabViewOuter(loginBySmS(theme)),
+        tabViewOuter(loginByQRCode(theme)),
+        tabViewOuter(loginByCookie(theme)),
+      ],
+    );
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -527,7 +537,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         title: Row(
           children: [
-            const Text('登录'),
+            Text(fromMessages ? '登录以查看消息' : '登录'),
             if (isLandscape)
               Expanded(
                 child: Align(
@@ -589,15 +599,14 @@ class _LoginPageState extends State<LoginPage> {
           }
           return false;
         },
-        child: tabBarView(
-          controller: _loginPageCtr.tabController,
-          children: [
-            tabViewOuter(loginByPassword(theme)),
-            tabViewOuter(loginBySmS(theme)),
-            tabViewOuter(loginByQRCode(theme)),
-            tabViewOuter(loginByCookie(theme)),
-          ],
-        ),
+        child: fromMessages
+            ? Column(
+                children: [
+                  _MessageLoginHeader(theme: theme),
+                  Expanded(child: loginTabs),
+                ],
+              )
+            : loginTabs,
       ),
     );
   }
@@ -606,6 +615,54 @@ class _LoginPageState extends State<LoginPage> {
     return SingleChildScrollView(
       padding: padding,
       child: child.constraintWidth(),
+    );
+  }
+}
+
+class _MessageLoginHeader extends StatelessWidget {
+  const _MessageLoginHeader({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+      color: theme.colorScheme.surfaceContainerLow,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.mark_unread_chat_alt_outlined,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('登录后查看消息', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  '同步私信、回复、@我和系统通知',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

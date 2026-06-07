@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/badge.dart';
 import 'package:PiliNext/common/widgets/custom_icon.dart';
 import 'package:PiliNext/common/widgets/flutter/refresh_indicator.dart';
@@ -78,7 +79,7 @@ class _MusicDetailPageState extends CommonDynPageState<MusicDetailPage> {
             final showTitle = controller.showTitle.value;
             return AnimatedOpacity(
               opacity: showTitle ? 1 : 0,
-              duration: const Duration(milliseconds: 300),
+              duration: FluidTokens.durationLg,
               child: IgnorePointer(
                 ignoring: !showTitle,
                 child: Row(

@@ -12,6 +12,7 @@ import 'package:PiliNext/models/common/image_preview_type.dart';
 import 'package:PiliNext/models/common/video/video_type.dart';
 import 'package:PiliNext/models/dynamics/result.dart';
 import 'package:PiliNext/models_new/pgc/pgc_info_model/episode.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/models_new/video/video_detail/dimension.dart';
 import 'package:PiliNext/pages/common/common_intro_controller.dart';
 import 'package:PiliNext/pages/common/publish/publish_route.dart';
@@ -518,7 +519,7 @@ abstract final class PageUtils {
             ),
           );
         },
-        transitionDuration: const Duration(milliseconds: 350),
+        transitionDuration: FluidTokens.durationXl,
         transitionBuilder: (context, animation, secondaryAnimation, child) {
           final begin = context.isPortrait
               ? const Offset(0.0, 1.0)
@@ -528,7 +529,7 @@ abstract final class PageUtils {
               Tween<Offset>(
                 begin: begin,
                 end: Offset.zero,
-              ).chain(CurveTween(curve: Curves.easeInOut)),
+              ).chain(CurveTween(curve: FluidTokens.curveStandard)),
             ),
             child: child,
           );

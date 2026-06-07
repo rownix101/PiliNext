@@ -1,5 +1,6 @@
 import 'dart:io' show File;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/constants.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
 import 'package:PiliNext/common/widgets/loading_widget/loading_widget.dart';
@@ -148,7 +149,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             onTap: () => EasyThrottle.throttle(
               'imagePicker',
-              const Duration(milliseconds: 500),
+              FluidTokens.durationXxl,
               () {
                 _pickImg(theme);
               },

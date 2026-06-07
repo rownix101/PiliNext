@@ -7,6 +7,7 @@ import 'package:PiliNext/plugin/pl_player/controller.dart';
 import 'package:PiliNext/plugin/pl_player/models/play_status.dart';
 import 'package:PiliNext/plugin/pl_player/utils/danmaku_options.dart';
 import 'package:PiliNext/utils/danmaku_utils.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -176,7 +177,7 @@ class _PlDanmakuState extends State<PlDanmaku> {
         opacity: playerController.enableShowDanmaku.value
             ? playerController.danmakuOpacity.value
             : 0,
-        duration: const Duration(milliseconds: 100),
+        duration: FluidTokens.durationInstant,
         child: DanmakuScreen<DanmakuExtra>(
           createdController: (e) {
             playerController.danmakuController = _controller = e;

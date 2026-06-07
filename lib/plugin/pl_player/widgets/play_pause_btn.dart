@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
@@ -29,7 +30,7 @@ class PlayOrPauseButtonState extends State<PlayOrPauseButton>
     controller = AnimationController(
       vsync: this,
       value: player.state.playing ? 1 : 0,
-      duration: const Duration(milliseconds: 200),
+      duration: FluidTokens.durationMd,
     );
     subscription = player.stream.playing.listen((playing) {
       if (playing) {

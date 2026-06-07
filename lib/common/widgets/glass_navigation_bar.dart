@@ -1,6 +1,8 @@
 import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/design/design_tokens.dart';
+import 'package:PiliNext/utils/haptic_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Tab configuration for [GlassNavigationBar].
 class GlassNavigationDestination {
@@ -26,8 +28,10 @@ class GlassNavigationDestination {
 /// - BackdropFilter blur background (glassmorphism)
 /// - Semi-transparent surface with subtle border
 /// - JellyIndicator for stretch-squish tab transitions
-/// - Adaptive layout: phone/tablet/desktop
+/// - Adaptive layout: phone/tablet/desktop with capped max width
 /// - Auto-hide on scroll (via [visible] parameter)
+/// - Keyboard navigation (arrow keys)
+/// - Mouse hover feedback (desktop)
 ///
 /// Usage:
 /// ```dart
@@ -47,6 +51,7 @@ class GlassNavigationBar extends StatefulWidget {
     this.width,
     this.height,
     this.bottomPadding,
+    this.autofocus = false,
   });
 
   /// Currently selected tab index.
@@ -61,7 +66,8 @@ class GlassNavigationBar extends StatefulWidget {
   /// Whether the bar is visible (for scroll-hide behavior).
   final bool visible;
 
-  /// Override width. If null, auto-calculated from device type.
+  /// Override width. If null, auto-calculated from device type
+  /// with a max-width cap on desktop.
   final double? width;
 
   /// Override height. If null, auto-calculated from device type.
@@ -70,13 +76,19 @@ class GlassNavigationBar extends StatefulWidget {
   /// Override bottom padding (e.g., for system nav bar).
   final double? bottomPadding;
 
+  /// Whether to request focus for keyboard navigation.
+  final bool autofocus;
+
   @override
   State<GlassNavigationBar> createState() => _GlassNavigationBarState();
 }
 
+enum _Breakpoint { phone, tablet, desktop }
+
 class _GlassNavigationBarState extends State<GlassNavigationBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _visibilityController;
+  late FocusNode _focusNode;
 
   @override
   void initState() {
@@ -86,6 +98,7 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
       duration: FluidTokens.durationMd,
       value: widget.visible ? 1.0 : 0.0,
     );
+    _focusNode = FocusNode();
   }
 
   @override
@@ -103,22 +116,40 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
   @override
   void dispose() {
     _visibilityController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  // ── Layout calculation ───────────────────────────────────────
+  // ── Layout breakpoints ────────────────────────────────────────
+
+  static const double _phoneBreakpointMax = 600;
+  static const double _tabletBreakpointMax = 1024;
+
+  static _Breakpoint _breakpointForWidth(double screenWidth) {
+    if (screenWidth < _phoneBreakpointMax) return _Breakpoint.phone;
+    if (screenWidth <= _tabletBreakpointMax) return _Breakpoint.tablet;
+    return _Breakpoint.desktop;
+  }
+
+  // ── Layout constants ──────────────────────────────────────────
 
   static const double _phoneItemWidth = 80;
   static const double _phoneHeight = 64;
   static const double _phoneBottomPad = 8;
+  static const double _phoneFontSize = 11;
 
   static const double _tabletItemWidth = 120;
   static const double _tabletHeight = 72;
   static const double _tabletBottomPad = 12;
+  static const double _tabletFontSize = 12;
 
   static const double _desktopItemWidth = 140;
   static const double _desktopHeight = 80;
   static const double _desktopBottomPad = 16;
+  static const double _desktopFontSize = 13;
+
+  /// Prevents the bar from stretching too wide on ultrawide monitors.
+  static const double _desktopMaxBarWidth = 600;
 
   // ── Build ────────────────────────────────────────────────────
 
@@ -129,10 +160,13 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Determine device layout
+    final bp = _breakpointForWidth(screenWidth);
     final (itemWidth, barHeight, bottomPad, barWidth) = _layoutForWidth(
       screenWidth,
+      bp,
     );
+    final labelFontSize = _fontSizeForBreakpoint(bp);
+
     final selectedIndex = widget.destinations.isEmpty
         ? 0
         : widget.selectedIndex.clamp(0, widget.destinations.length - 1);
@@ -145,7 +179,7 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
         final reduceMotion = FluidTokens.reduceMotionOf(context);
         final visibilityValue = reduceMotion
             ? _visibilityController.value
-            : Curves.easeOutCubic.transform(_visibilityController.value);
+            : FluidTokens.curveEnter.transform(_visibilityController.value);
         return Transform.translate(
           offset: Offset(
             0,
@@ -159,145 +193,165 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
           ),
         );
       },
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: _safeHorizontalPad(screenWidth, barWidth),
-          right: _safeHorizontalPad(screenWidth, barWidth),
-          bottom: effectiveBottomPad,
-        ),
-        child: ClipRRect(
-          borderRadius: AppRadii.fullAll,
-          child: GlassTokens.blurFilter(
-            sigma: _blurForWidth(screenWidth),
-            child: Container(
-              width: barWidth,
-              height: barHeight,
-              decoration: BoxDecoration(
-                color: colorScheme.surface.withValues(
-                  alpha: GlassTokens.opacityFloating,
+      child: Focus(
+        focusNode: _focusNode,
+        autofocus: widget.autofocus,
+        onKeyEvent: _handleKeyEvent,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: _safeHorizontalPad(screenWidth, barWidth),
+            right: _safeHorizontalPad(screenWidth, barWidth),
+            bottom: effectiveBottomPad,
+          ),
+          child: ClipRRect(
+            borderRadius: AppRadii.fullAll,
+            child: GlassTokens.blurFilter(
+              sigma: _blurForBreakpoint(bp),
+              child: Container(
+                width: barWidth,
+                height: barHeight,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(
+                    alpha: GlassTokens.opacityFloating,
+                  ),
+                  borderRadius: AppRadii.fullAll,
+                  border: Border.fromBorderSide(
+                    isDark
+                        ? GlassTokens.borderDark(colorScheme.outlineVariant)
+                        : GlassTokens.borderLight(colorScheme.outlineVariant),
+                  ),
+                  boxShadow: AppShadows.of(3, theme.brightness),
                 ),
-                borderRadius: AppRadii.fullAll,
-                border: Border.fromBorderSide(
-                  isDark
-                      ? GlassTokens.borderDark(colorScheme.outlineVariant)
-                      : GlassTokens.borderLight(colorScheme.outlineVariant),
-                ),
-                boxShadow: AppShadows.of(3, theme.brightness),
-              ),
-              child: Stack(
-                children: [
-                  // ── Highlight gradient (top reflection) ───────
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: AppRadii.fullAll,
-                          gradient: GlassTokens.highlightGradient(
-                            theme.brightness,
+                child: Stack(
+                  children: [
+                    // ── Highlight gradient (top reflection) ───────
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadii.fullAll,
+                            gradient: GlassTokens.highlightGradient(
+                              theme.brightness,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
 
-                  if (widget.destinations.isNotEmpty && itemWidth > 12)
-                    // ── Jelly indicator ──────────────────────────
-                    JellyIndicator(
-                      currentIndex: selectedIndex,
-                      itemCount: widget.destinations.length,
-                      itemWidth: itemWidth,
-                      indicatorHeight: barHeight - 12, // 6dp padding each side
-                      indicatorColor: colorScheme.primary.withValues(
-                        alpha: 0.18,
+                    if (widget.destinations.isNotEmpty && itemWidth > 12)
+                      // ── Jelly indicator ──────────────────────────
+                      JellyIndicator(
+                        currentIndex: selectedIndex,
+                        itemCount: widget.destinations.length,
+                        itemWidth: itemWidth,
+                        indicatorHeight:
+                            barHeight - 12, // 6dp padding each side
+                        indicatorColor: colorScheme.primary.withValues(
+                          alpha: 0.18,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 6,
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 6,
-                      ),
-                    ),
 
-                  // ── Tab items ─────────────────────────────────
-                  Row(
-                    children: List.generate(widget.destinations.length, (i) {
-                      final dest = widget.destinations[i];
-                      final isSelected = i == selectedIndex;
+                    // ── Tab items ─────────────────────────────────
+                    Row(
+                      children: List.generate(
+                        widget.destinations.length,
+                        (i) {
+                          final dest = widget.destinations[i];
+                          final isSelected = i == selectedIndex;
 
-                      return Expanded(
-                        child: Semantics(
-                          button: true,
-                          selected: isSelected,
-                          label: dest.label,
-                          child: InkResponse(
-                            onTap: () => widget.onDestinationSelected(i),
-                            containedInkWell: true,
-                            radius: 36,
-                            highlightShape: BoxShape.rectangle,
-                            child: SizedBox(
-                              height: barHeight,
-                              child: AnimatedScale(
-                                scale: isSelected ? 1.0 : 0.96,
-                                duration: FluidTokens.effectiveDuration(
-                                  context,
-                                  FluidTokens.durationSm,
-                                ),
-                                curve: FluidTokens.curveEnter,
-                                child: AnimatedOpacity(
-                                  opacity: isSelected ? 1.0 : 0.72,
-                                  duration: FluidTokens.effectiveDuration(
-                                    context,
-                                    FluidTokens.durationSm,
-                                  ),
-                                  curve: FluidTokens.curveStandard,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Icon with optional badge
-                                      SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: dest.badge != null
-                                            ? Badge(
-                                                isLabelVisible: true,
-                                                label: dest.badge!,
-                                                child: isSelected
+                          final states = <WidgetState>{
+                            if (isSelected) WidgetState.selected,
+                          };
+
+                          final effectiveMouseCursor =
+                              WidgetStateMouseCursor.clickable.resolve(states);
+
+                          return Expanded(
+                            child: Semantics(
+                              button: true,
+                              selected: isSelected,
+                              label: dest.label,
+                              child: InkWell(
+                                onTap: () {
+                                  HapticService.tap();
+                                  widget.onDestinationSelected(i);
+                                },
+                                mouseCursor: effectiveMouseCursor,
+                                borderRadius: BorderRadius.circular(barHeight),
+                                statesController:
+                                    _tabStatesControllers[i] ??=
+                                        WidgetStatesController(),
+                                child: SizedBox(
+                                  height: barHeight,
+                                  child: AnimatedScale(
+                                    scale: isSelected ? 1.0 : 0.96,
+                                    duration: FluidTokens.effectiveDuration(
+                                      context,
+                                      FluidTokens.durationSm,
+                                    ),
+                                    curve: FluidTokens.curveEnter,
+                                    child: AnimatedOpacity(
+                                      opacity: isSelected ? 1.0 : 0.72,
+                                      duration: FluidTokens.effectiveDuration(
+                                        context,
+                                        FluidTokens.durationSm,
+                                      ),
+                                      curve: FluidTokens.curveStandard,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: dest.badge != null
+                                                ? Badge(
+                                                    isLabelVisible: true,
+                                                    label: dest.badge!,
+                                                    child: isSelected
+                                                        ? dest.selectedIcon
+                                                        : dest.icon,
+                                                  )
+                                                : (isSelected
                                                     ? dest.selectedIcon
-                                                    : dest.icon,
-                                              )
-                                            : (isSelected
-                                                  ? dest.selectedIcon
-                                                  : dest.icon),
+                                                    : dest.icon),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            dest.label,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: labelFontSize,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
+                                              color: isSelected
+                                                  ? colorScheme.onSurface
+                                                  : colorScheme.onSurface
+                                                      .withValues(
+                                                        alpha: 0.60,
+                                                      ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      // Label
-                                      Text(
-                                        dest.label,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                          color: isSelected
-                                              ? colorScheme.onSurface
-                                              : colorScheme.onSurface
-                                                    .withValues(
-                                                      alpha: 0.60,
-                                                    ),
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -306,45 +360,84 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
     );
   }
 
+  // ── Keyboard navigation ───────────────────────────────────────
+
+  final List<WidgetStatesController?> _tabStatesControllers = [];
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final destCount = widget.destinations.length;
+    if (destCount <= 1) return KeyEventResult.ignored;
+
+    final current = widget.selectedIndex.clamp(0, destCount - 1);
+    final int next;
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      next = current == 0 ? destCount - 1 : current - 1;
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      next = current == destCount - 1 ? 0 : current + 1;
+    } else {
+      return KeyEventResult.ignored;
+    }
+
+    HapticService.tick();
+    widget.onDestinationSelected(next);
+    return KeyEventResult.handled;
+  }
+
   // ── Layout helpers ───────────────────────────────────────────
 
+  double _fontSizeForBreakpoint(_Breakpoint bp) => switch (bp) {
+        _Breakpoint.phone => _phoneFontSize,
+        _Breakpoint.tablet => _tabletFontSize,
+        _Breakpoint.desktop => _desktopFontSize,
+      };
+
   (double itemWidth, double barHeight, double bottomPad, double barWidth)
-  _layoutForWidth(double screenWidth) {
+  _layoutForWidth(double screenWidth, _Breakpoint bp) {
     final tabCount = widget.destinations.length;
     final availableWidth = screenWidth - 32;
 
-    if (screenWidth < 600) {
-      return _layoutForDevice(
-        tabCount: tabCount,
-        preferredItemWidth: _phoneItemWidth,
-        barHeight: widget.height ?? _phoneHeight,
-        bottomPad: _phoneBottomPad,
-        maxBarWidth: _maxBarWidth(availableWidth),
-      );
-    } else if (screenWidth <= 1024) {
-      return _layoutForDevice(
-        tabCount: tabCount,
-        preferredItemWidth: _tabletItemWidth,
-        barHeight: widget.height ?? _tabletHeight,
-        bottomPad: _tabletBottomPad,
-        maxBarWidth: _maxBarWidth(availableWidth),
-      );
-    } else {
-      return _layoutForDevice(
-        tabCount: tabCount,
-        preferredItemWidth: _desktopItemWidth,
-        barHeight: widget.height ?? _desktopHeight,
-        bottomPad: _desktopBottomPad,
-        maxBarWidth: _maxBarWidth(availableWidth),
-      );
-    }
+    return switch (bp) {
+      _Breakpoint.phone => _layoutForDevice(
+          tabCount: tabCount,
+          preferredItemWidth: _phoneItemWidth,
+          barHeight: widget.height ?? _phoneHeight,
+          bottomPad: _phoneBottomPad,
+          maxBarWidth: _effectiveMaxBarWidth(availableWidth),
+        ),
+      _Breakpoint.tablet => _layoutForDevice(
+          tabCount: tabCount,
+          preferredItemWidth: _tabletItemWidth,
+          barHeight: widget.height ?? _tabletHeight,
+          bottomPad: _tabletBottomPad,
+          maxBarWidth: _effectiveMaxBarWidth(availableWidth),
+        ),
+      _Breakpoint.desktop => _layoutForDevice(
+          tabCount: tabCount,
+          preferredItemWidth: _desktopItemWidth,
+          barHeight: widget.height ?? _desktopHeight,
+          bottomPad: _desktopBottomPad,
+          maxBarWidth: _effectiveMaxBarWidth(
+            availableWidth,
+            isDesktop: true,
+          ),
+        ),
+    };
   }
 
-  double _maxBarWidth(double availableWidth) {
-    final requestedWidth = widget.width;
-    return requestedWidth == null
-        ? availableWidth
-        : requestedWidth.clamp(0.0, availableWidth).toDouble();
+  double _effectiveMaxBarWidth(
+    double availableWidth, {
+    bool isDesktop = false,
+  }) {
+    if (widget.width != null) {
+      return widget.width!.clamp(0.0, availableWidth);
+    }
+    if (isDesktop) {
+      return _desktopMaxBarWidth.clamp(0.0, availableWidth);
+    }
+    return availableWidth;
   }
 
   (double itemWidth, double barHeight, double bottomPad, double barWidth)
@@ -365,16 +458,14 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
   }
 
   double _safeHorizontalPad(double screenWidth, double barWidth) {
-    // Center the bar, ensuring minimum side padding
     final available = screenWidth;
     final pad = (available - barWidth) / 2;
     return pad.clamp(16.0, double.infinity);
   }
 
-  double _blurForWidth(double screenWidth) {
-    // Tier management: cap blur on lower-end devices
-    if (screenWidth < 600) return GlassTokens.blurFloating;
-    if (screenWidth <= 1024) return GlassTokens.blurPanel;
-    return GlassTokens.blurOverlay;
-  }
+  double _blurForBreakpoint(_Breakpoint bp) => switch (bp) {
+        _Breakpoint.phone => GlassTokens.blurFloating,
+        _Breakpoint.tablet => GlassTokens.blurPanel,
+        _Breakpoint.desktop => GlassTokens.blurOverlay,
+      };
 }

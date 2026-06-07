@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/skeleton/fav_pgc_item.dart';
 import 'package:PiliNext/common/widgets/button/icon_button.dart';
 import 'package:PiliNext/common/widgets/dialog/dialog.dart';
@@ -71,7 +72,7 @@ class _FavPgcChildPageState extends State<FavPgcChildPage>
               offset: _favPgcController.enableMultiSelect.value
                   ? const Offset(0, -1)
                   : Offset.zero,
-              duration: const Duration(milliseconds: 150),
+              duration: FluidTokens.durationSm,
               child: Container(
                 height: bottomH,
                 padding: padding,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' show min;
 import 'dart:ui';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/pair.dart';
 import 'package:PiliNext/common/widgets/progress_bar/segment_progress_bar.dart';
@@ -188,7 +189,7 @@ class VideoDetailController extends GetxController
   AnimationController get animationController =>
       animController ??= (AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: 200),
+        duration: FluidTokens.durationMd,
       )..addListener(_animListener));
 
   void refreshPage() {
@@ -226,8 +227,8 @@ class VideoDetailController extends GetxController
     if (outerController.hasClients) {
       outerController.animateTo(
         outerController.offset,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
+        duration: FluidTokens.durationXxl,
+        curve: FluidTokens.curveStandard,
       );
     }
   }
@@ -973,9 +974,10 @@ class VideoDetailController extends GetxController
       }
 
       /// 取出符合当前解码格式的videoItem
-      firstVideo = videosList.firstWhere(
+      final sourceList = videosList.isNotEmpty ? videosList : videoList;
+      firstVideo = sourceList.firstWhere(
         (e) => currentDecodeFormats.codes.any(e.codecs!.startsWith),
-        orElse: () => videosList.first,
+        orElse: () => sourceList.first,
       );
       _setVideoHeight();
 

@@ -66,7 +66,6 @@ import 'package:PiliNext/pages/setting/recommend_setting.dart';
 import 'package:PiliNext/pages/setting/style_setting.dart';
 import 'package:PiliNext/pages/setting/video_setting.dart';
 import 'package:PiliNext/pages/setting/simplified_view.dart';
-import 'package:PiliNext/pages/setting/view.dart' as old_setting;
 import 'package:PiliNext/pages/settings_search/view.dart';
 import 'package:PiliNext/pages/space_setting/view.dart';
 import 'package:PiliNext/pages/sponsor_block/view.dart';
@@ -77,6 +76,7 @@ import 'package:PiliNext/pages/webdav/view.dart';
 import 'package:PiliNext/pages/webview/view.dart';
 import 'package:PiliNext/pages/whisper/view.dart';
 import 'package:PiliNext/pages/whisper_detail/view.dart';
+import 'package:PiliNext/common/animation/animation.dart';
 import 'package:get/get.dart';
 
 class Routes {
@@ -107,7 +107,11 @@ class Routes {
     // 动态
     GetPage(name: '/dynamics', page: () => const DynamicsPage()),
     // 动态详情
-    GetPage(name: '/dynamicDetail', page: () => const DynamicDetailPage()),
+    DirectionalGetPage(
+      name: '/dynamicDetail',
+      page: () => const DynamicDetailPage(),
+      direction: TransitionDirection.fromRight,
+    ),
     // 关注
     GetPage(name: '/follow', page: () => const FollowPage()),
     // 粉丝

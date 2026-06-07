@@ -1,4 +1,4 @@
-import 'package:PiliNext/common/widgets/progress_bar/audio_video_progress_bar.dart';
+import 'package:PiliNext/common/widgets/progress_bar/animated_progress_bar.dart';
 import 'package:PiliNext/common/widgets/progress_bar/segment_progress_bar.dart';
 import 'package:PiliNext/pages/video/controller.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
@@ -32,7 +32,10 @@ class BottomControl extends StatelessWidget {
 
   void onDragUpdate(ThumbDragDetails duration) {
     if (!controller.isFileSource && controller.showSeekPreview) {
-      controller.updatePreviewIndex(duration.timeStamp.inSeconds);
+      final totalMs = controller.duration.value.inMilliseconds;
+      final ratio =
+          totalMs > 0 ? (duration.timeStamp.inMilliseconds / totalMs).clamp(0.0, 1.0) : 0.5;
+      controller.updatePreviewIndex(duration.timeStamp.inSeconds, ratio: ratio);
     }
     controller.onUpdatedSliderProgress(duration.timeStamp);
   }
@@ -53,16 +56,17 @@ class BottomControl extends StatelessWidget {
     final primary = colorScheme.isLight
         ? colorScheme.inversePrimary
         : colorScheme.primary;
+    final baseBarColor = colorScheme.onSurface.withValues(alpha: 0.12);
     final thumbGlowColor = primary.withAlpha(80);
     final bufferedBarColor = primary.withValues(alpha: 0.4);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 7),
             child: Obx(
               () => Offstage(
                 offstage: !controller.showControls.value,
@@ -73,20 +77,20 @@ class BottomControl extends StatelessWidget {
                     Obx(() {
                       final int value = controller.sliderPositionSeconds.value;
                       final int max = controller.duration.value.inSeconds;
-                      return ProgressBar(
+                      final bool isDragging =
+                          controller.isSliderMoving.value;
+                      return AnimatedProgressBar(
                         progress: Duration(seconds: value),
                         buffered: Duration(
                           seconds: controller.bufferedSeconds.value,
                         ),
                         total: Duration(seconds: max),
+                        isDragging: isDragging,
                         progressBarColor: primary,
-                        baseBarColor: const Color(0x33FFFFFF),
+                        baseBarColor: baseBarColor,
                         bufferedBarColor: bufferedBarColor,
                         thumbColor: primary,
                         thumbGlowColor: thumbGlowColor,
-                        barHeight: 3.5,
-                        thumbRadius: 7,
-                        thumbGlowRadius: 25,
                         onDragStart: onDragStart,
                         onDragUpdate: onDragUpdate,
                         onSeek: onSeek,
@@ -106,7 +110,7 @@ class BottomControl extends StatelessWidget {
                         videoDetailController.viewPointList.isNotEmpty &&
                         videoDetailController.showVP.value)
                       Padding(
-                        padding: const .only(bottom: 8.75),
+                        padding: const EdgeInsets.only(bottom: 8.75),
                         child: ViewPointSegmentProgressBar(
                           segments: videoDetailController.viewPointList,
                           onSeek: PlatformUtils.isDesktop
@@ -124,7 +128,10 @@ class BottomControl extends StatelessWidget {
               ),
             ),
           ),
-          buildBottomControl(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: buildBottomControl(),
+          ),
         ],
       ),
     );

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/utils/extension/theme_ext.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +23,7 @@ class FloatingNavigationBar extends StatelessWidget {
   // ignore: prefer_const_constructors_in_immutables
   FloatingNavigationBar({
     super.key,
-    this.animationDuration = const Duration(milliseconds: 500),
+    this.animationDuration = FluidTokens.durationXxl,
     this.selectedIndex = 0,
     required this.destinations,
     this.onDestinationSelected,
@@ -383,7 +384,7 @@ class NavigationIndicator extends StatelessWidget {
   static final _anim = Tween<double>(
     begin: .5,
     end: 1.0,
-  ).chain(CurveTween(curve: Curves.easeInOutCubicEmphasized));
+  ).chain(CurveTween(curve: FluidTokens.curveEmphasized));
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +407,7 @@ class NavigationIndicator extends StatelessWidget {
         builder: (context, child) {
           return _SelectableAnimatedBuilder(
             isSelected: animation.isForwardOrCompleted,
-            duration: const Duration(milliseconds: 100),
+            duration: FluidTokens.durationInstant,
             alwaysDoFullAnimation: true,
             builder: (context, fadeAnimation) {
               return FadeTransition(
@@ -485,7 +486,7 @@ class _DestinationLayoutAnimationBuilder extends StatelessWidget {
       case NavigationDestinationLabelBehavior.onlyShowSelected:
         return _CurvedAnimationBuilder(
           animation: info.selectedAnimation,
-          curve: Curves.easeInOutCubicEmphasized,
+          curve: FluidTokens.curveEmphasized,
           reverseCurve: Curves.easeInOutCubicEmphasized.flipped,
           builder: builder,
         );
@@ -583,7 +584,7 @@ class _StatusTransitionWidgetBuilder extends StatusTransitionWidget {
 class _SelectableAnimatedBuilder extends StatefulWidget {
   const _SelectableAnimatedBuilder({
     required this.isSelected,
-    this.duration = const Duration(milliseconds: 200),
+    this.duration = FluidTokens.durationMd,
     this.alwaysDoFullAnimation = false,
     required this.builder,
   });

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/plugin/pl_player/widgets/seek_feedback.dart';
 import 'package:flutter/material.dart';
 
@@ -26,7 +27,7 @@ class ForwardSeekIndicatorState extends State<ForwardSeekIndicator> {
   void initState() {
     super.initState();
     duration = widget.duration;
-    timer = Timer(const Duration(milliseconds: 400), () {
+    timer = Timer(FluidTokens.durationXl, () {
       widget.onSubmitted(duration);
     });
   }
@@ -39,7 +40,7 @@ class ForwardSeekIndicatorState extends State<ForwardSeekIndicator> {
 
   void increment() {
     timer?.cancel();
-    timer = Timer(const Duration(milliseconds: 400), () {
+    timer = Timer(FluidTokens.durationXl, () {
       widget.onSubmitted(duration);
     });
     setState(() {

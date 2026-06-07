@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/widgets/image_viewer/hero.dart';
 import 'package:PiliNext/models/common/image_preview_type.dart';
@@ -63,8 +64,8 @@ Widget htmlRender({
                 height: isEmote ? 22.0 : null,
                 memCacheWidth: width.cacheSize(context),
                 imageUrl: ImageUtils.thumbnailUrl(imgUrl, 60),
-                fadeInDuration: const Duration(milliseconds: 120),
-                fadeOutDuration: const Duration(milliseconds: 120),
+                fadeInDuration: FluidTokens.durationXs,
+                fadeOutDuration: FluidTokens.durationXs,
                 placeholder: (context, url) => Image.asset(Assets.loading),
               ),
             ),

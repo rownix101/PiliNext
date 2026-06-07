@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/widgets/gesture/tap_gesture_recognizer.dart';
 import 'package:PiliNext/common/widgets/image/cached_network_svg_image.dart';
@@ -228,8 +229,8 @@ class OpusContent extends StatelessWidget {
                   height: height,
                   memCacheWidth: width.cacheSize(context),
                   imageUrl: ImageUtils.thumbnailUrl(pic.url!, 60),
-                  fadeInDuration: const Duration(milliseconds: 120),
-                  fadeOutDuration: const Duration(milliseconds: 120),
+                  fadeInDuration: FluidTokens.durationXs,
+                  fadeOutDuration: FluidTokens.durationXs,
                   placeholder: (_, _) => Image.asset(Assets.loading),
                 );
                 if (!(pic.isLongPic ?? false)) {

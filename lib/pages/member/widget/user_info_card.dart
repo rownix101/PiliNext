@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/avatars.dart';
@@ -632,8 +633,8 @@ class UserInfoCard extends StatelessWidget {
                     width: width,
                     memCacheWidth: memCacheWidth,
                     imageUrl: ImageUtils.thumbnailUrl(img.header),
-                    fadeInDuration: const Duration(milliseconds: 120),
-                    fadeOutDuration: const Duration(milliseconds: 120),
+                    fadeInDuration: FluidTokens.durationXs,
+                    fadeOutDuration: FluidTokens.durationXs,
                     placeholder: (_, _) =>
                         const SizedBox(width: .infinity, height: kHeaderHeight),
                   ),
@@ -699,8 +700,8 @@ class UserInfoCard extends StatelessWidget {
                     ? .lighten
                     : .darken
               : null,
-          fadeInDuration: const Duration(milliseconds: 120),
-          fadeOutDuration: const Duration(milliseconds: 120),
+          fadeInDuration: FluidTokens.durationXs,
+          fadeOutDuration: FluidTokens.durationXs,
         ),
       ),
     );

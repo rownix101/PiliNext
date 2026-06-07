@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/utils/feed_back.dart';
 import 'package:flutter/material.dart';
 
@@ -56,7 +57,7 @@ class ActionRowLineItem extends StatelessWidget {
                 ?icon,
               AnimatedOpacity(
                 opacity: isLoading ? 0 : 1,
-                duration: const Duration(milliseconds: 200),
+                duration: FluidTokens.durationMd,
                 child: Text(
                   text!,
                   style: TextStyle(

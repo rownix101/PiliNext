@@ -47,6 +47,9 @@ class _MainAppState extends PopScopeState<MainApp>
   late ThemeData theme;
   Timer? _saveWindowBoundsTimer;
 
+  /// Minimum width to auto-switch to sidebar layout.
+  static const double _sidebarBreakpoint = 840;
+
   @override
   bool get initCanPop => false;
 
@@ -79,7 +82,6 @@ class _MainAppState extends PopScopeState<MainApp>
     if (PlatformUtils.isDesktop) {
       windowManager.setBrightness(brightness);
     }
-    // PiliNext: always use bottom navigation, all orientations.
     _mainController.useBottomNav = true;
   }
 
@@ -148,7 +150,7 @@ class _MainAppState extends PopScopeState<MainApp>
     }
     _saveWindowBoundsTimer?.cancel();
     _saveWindowBoundsTimer = Timer(
-      const Duration(milliseconds: 400),
+      FluidTokens.durationXl,
       _saveWindowBounds,
     );
   }
@@ -287,6 +289,17 @@ class _MainAppState extends PopScopeState<MainApp>
     await trayManager.setContextMenu(trayMenu);
   }
 
+  /// Whether to use sidebar navigation instead of bottom bar.
+  bool _shouldUseSideLayout(double screenWidth) {
+    if (_mainController.navigationBars.length <= 1) return false;
+    if (_mainController.useSideBar) return true;
+    if (_mainController.optTabletNav &&
+        screenWidth >= _sidebarBreakpoint) {
+      return true;
+    }
+    return false;
+  }
+
   @pragma('vm:prefer-inline')
   static void _onBack() {
     if (Platform.isAndroid) {
@@ -342,12 +355,13 @@ class _MainAppState extends PopScopeState<MainApp>
 
   Widget? _badgeForType(NavigationBarType type) {
     if (type == NavigationBarType.dynamics) {
-      return Obx(
-        () {
-          final count = _mainController.dynCount.value;
-          return count > 0 ? Text(count.toString()) : const SizedBox.shrink();
-        },
-      );
+      final count = _mainController.dynCount.value;
+      return count > 0 ? Text(count.toString()) : null;
+    }
+    if (type == NavigationBarType.messages) {
+      if (!_mainController.accountService.isLogin.value) return null;
+      final count = _mainController.msgUnReadCount.value;
+      return count.isNotEmpty ? Text(count) : null;
     }
     return null;
   }
@@ -377,24 +391,32 @@ class _MainAppState extends PopScopeState<MainApp>
 
   @override
   Widget build(BuildContext context) {
-    Widget child = _buildTabContent();
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final sideLayout = _shouldUseSideLayout(screenWidth);
 
-    // PiliNext: always bottom navigation, all devices.
-    // Desktop users can optionally switch to left pill in settings.
-    final bottomNav = _bottomNav;
+    final tabContent = _buildTabContent();
 
-    child = Scaffold(
+    Widget child = Scaffold(
       extendBody: true,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(toolbarHeight: 0),
-      body: Padding(
-        padding: EdgeInsets.only(
-          left: _padding.left,
-          right: _padding.right,
-        ),
-        child: child,
-      ),
-      bottomNavigationBar: bottomNav,
+      body: sideLayout
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildNavigationRail(),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(child: tabContent),
+              ],
+            )
+          : Padding(
+              padding: EdgeInsets.only(
+                left: _padding.left,
+                right: _padding.right,
+              ),
+              child: tabContent,
+            ),
+      bottomNavigationBar: sideLayout ? null : _bottomNav,
     );
 
     if (PlatformUtils.isMobile) {
@@ -408,6 +430,52 @@ class _MainAppState extends PopScopeState<MainApp>
     }
 
     return child;
+  }
+
+  Widget _buildNavigationRail() {
+    final destinations = _mainController.navigationBars;
+    return Obx(() {
+      return NavigationRail(
+        selectedIndex: _mainController.selectedIndex.value.clamp(
+          0,
+          destinations.length - 1,
+        ),
+        onDestinationSelected: _mainController.setIndex,
+        labelType: NavigationRailLabelType.all,
+        destinations: destinations.map((e) {
+          return NavigationRailDestination(
+            icon: _buildSidebarIcon(e),
+            selectedIcon: _buildSidebarIcon(e, selected: true),
+            label: Text(e.label),
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  Widget _buildSidebarIcon(NavigationBarType type, {bool selected = false}) {
+    final icon = selected ? type.selectIcon : type.icon;
+    final needsBadge =
+        type == NavigationBarType.dynamics ||
+        type == NavigationBarType.messages;
+    if (!needsBadge) return icon;
+    return Obx(() {
+      int? count;
+      if (type == NavigationBarType.dynamics) {
+        count = _mainController.dynCount.value;
+      } else {
+        final v = _mainController.msgUnReadCount.value;
+        count = int.tryParse(v);
+      }
+      if (count != null && count > 0) {
+        return Badge(
+          isLabelVisible: true,
+          label: Text(count > 99 ? '99+' : count.toString()),
+          child: icon,
+        );
+      }
+      return icon;
+    });
   }
 
   Widget _buildIcon({required NavigationBarType type, bool selected = false}) {

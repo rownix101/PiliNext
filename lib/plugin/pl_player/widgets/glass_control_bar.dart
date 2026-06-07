@@ -1,5 +1,6 @@
 import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/design/design_tokens.dart';
+import 'package:PiliNext/common/widgets/view_safe_area.dart';
 import 'package:flutter/material.dart';
 
 /// A glassmorphism player control bar wrapper.
@@ -14,12 +15,16 @@ class GlassControlBar extends StatefulWidget {
     this.visible = true,
     this.height,
     this.isTop = false,
+    this.removeSafeArea = false,
+    this.isFullScreen = false,
   });
 
   final Widget child;
   final bool visible;
   final double? height;
   final bool isTop;
+  final bool removeSafeArea;
+  final bool isFullScreen;
 
   @override
   State<GlassControlBar> createState() => _GlassControlBarState();
@@ -28,6 +33,9 @@ class GlassControlBar extends StatefulWidget {
 class _GlassControlBarState extends State<GlassControlBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late CurvedAnimation _curvedAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<Offset> _noSlide;
 
   @override
   void initState() {
@@ -37,6 +45,21 @@ class _GlassControlBarState extends State<GlassControlBar>
       duration: FluidTokens.durationMd,
       value: widget.visible ? 1.0 : 0.0,
     );
+    _curvedAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: FluidTokens.curveEnter,
+    );
+    _slideAnimation = _buildSlideAnimation();
+    _noSlide = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
+        .animate(_curvedAnimation);
+  }
+
+  Animation<Offset> _buildSlideAnimation() {
+    final beginOffset = widget.isTop
+        ? const Offset(0, -FluidTokens.controlBarDy)
+        : const Offset(0, FluidTokens.panelEnterDy);
+    return Tween<Offset>(begin: beginOffset, end: Offset.zero)
+        .animate(_curvedAnimation);
   }
 
   @override
@@ -49,10 +72,14 @@ class _GlassControlBarState extends State<GlassControlBar>
         _controller.reverse();
       }
     }
+    if (widget.isTop != oldWidget.isTop) {
+      _slideAnimation = _buildSlideAnimation();
+    }
   }
 
   @override
   void dispose() {
+    _curvedAnimation.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -67,35 +94,33 @@ class _GlassControlBarState extends State<GlassControlBar>
         ? GlassTokens.borderDark(colorScheme.outlineVariant)
         : GlassTokens.borderLight(colorScheme.outlineVariant);
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final value = FluidTokens.curveEnter.transform(_controller.value);
-        final dy = widget.isTop
-            ? -FluidTokens.controlBarDy * (1 - value)
-            : FluidTokens.panelEnterDy * (1 - value);
-        return Opacity(
-          opacity: value.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: reduceMotion ? Offset.zero : Offset(0, dy),
+    final child = widget.removeSafeArea
+        ? widget.child
+        : ViewSafeArea(
+            left: widget.isFullScreen,
+            right: widget.isFullScreen,
+            child: widget.child,
+          );
+
+    return FadeTransition(
+      opacity: _curvedAnimation,
+      child: SlideTransition(
+        position: reduceMotion ? _noSlide : _slideAnimation,
+        child: GlassTokens.blurFilter(
+          sigma: GlassTokens.blurFloating,
+          child: Container(
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withValues(
+                alpha: GlassTokens.opacityFloating,
+              ),
+              border: Border(
+                top: widget.isTop ? BorderSide.none : border,
+                bottom: widget.isTop ? border : BorderSide.none,
+              ),
+            ),
             child: child,
           ),
-        );
-      },
-      child: GlassTokens.blurFilter(
-        sigma: GlassTokens.blurFloating,
-        child: Container(
-          height: widget.height,
-          decoration: BoxDecoration(
-            color: colorScheme.surface.withValues(
-              alpha: GlassTokens.opacityFloating,
-            ),
-            border: Border(
-              top: widget.isTop ? BorderSide.none : border,
-              bottom: widget.isTop ? border : BorderSide.none,
-            ),
-          ),
-          child: widget.child,
         ),
       ),
     );

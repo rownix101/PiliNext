@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/pages/video/pay_coins/view.dart';
 import 'package:PiliNext/utils/global_data.dart';
 import 'package:PiliNext/utils/platform_utils.dart';
@@ -70,12 +71,12 @@ mixin TripleMixin on GetxController, TickerProvider {
   AnimationController get tripleAnimCtr =>
       _tripleAnimCtr ??= AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: 1200),
-        reverseDuration: const Duration(milliseconds: 400),
+        duration: FluidTokens.durationSlow,
+        reverseDuration: FluidTokens.durationXl,
       );
 
   Animation<double> get tripleAnimation => _tripleAnimation ??= tripleAnimCtr
-      .drive(CurveTween(curve: Curves.easeInOut));
+      .drive(CurveTween(curve: FluidTokens.curveStandard));
 
   Timer? _timer;
 
@@ -85,8 +86,8 @@ mixin TripleMixin on GetxController, TickerProvider {
   }
 
   static final _duration = PlatformUtils.isMobile
-      ? const Duration(milliseconds: 200)
-      : const Duration(milliseconds: 255);
+      ? FluidTokens.durationMd
+      : FluidTokens.durationMd;
 
   void onStartTriple() {
     _timer ??= Timer(_duration, () {

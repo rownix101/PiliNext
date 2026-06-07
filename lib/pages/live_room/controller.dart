@@ -12,6 +12,7 @@ import 'package:PiliNext/models/common/video/live_quality.dart';
 import 'package:PiliNext/models/model_owner.dart';
 import 'package:PiliNext/models_new/live/live_danmaku/danmaku_msg.dart';
 import 'package:PiliNext/models_new/live/live_danmaku/live_emote.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/models_new/live/live_dm_info/data.dart';
 import 'package:PiliNext/models_new/live/live_medal_wall/uinfo_medal.dart';
 import 'package:PiliNext/models_new/live/live_room_info_h5/data.dart';
@@ -282,7 +283,7 @@ class LiveRoomController extends GetxController {
     if (scrollController.hasClients) {
       scrollController.animateTo(
         scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 500),
+        duration: FluidTokens.durationXxl,
         curve: Curves.linearToEaseOut,
       );
     }

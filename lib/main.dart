@@ -148,17 +148,20 @@ void main() async {
       ),
     );
     if (Platform.isAndroid) {
-      FlutterDisplayMode.supported.then((mode) {
+      FlutterDisplayMode.supported.then((modes) {
         final String? storageDisplay = GStorage.setting.get(
           SettingBoxKey.displayMode,
         );
         DisplayMode? displayMode;
         if (storageDisplay != null) {
-          displayMode = mode.firstWhereOrNull(
+          displayMode = modes.firstWhereOrNull(
             (e) => e.toString() == storageDisplay,
           );
         }
-        FlutterDisplayMode.setPreferredMode(displayMode ?? DisplayMode.auto);
+        displayMode ??= (List<DisplayMode>.from(modes)
+              ..sort((a, b) => b.refreshRate.compareTo(a.refreshRate)))
+            .firstOrNull ?? DisplayMode.auto;
+        FlutterDisplayMode.setPreferredMode(displayMode);
       });
     } else {
       ScreenBrightnessPlatform.instance.setAutoReset(false);
@@ -324,10 +327,8 @@ class MyApp extends StatelessWidget {
 class _CustomHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
-    final client = super.createHttpClient(context);
-    // ..maxConnectionsPerHost = 32
-    /// The default value is 15 seconds.
-    //   ..idleTimeout = const Duration(seconds: 15);
+    final client = super.createHttpClient(context)
+      ..maxConnectionsPerHost = 32;
     if (kDebugMode || Pref.badCertificateCallback) {
       client.badCertificateCallback = (cert, host, port) => true;
     }

@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/custom_height_widget.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
@@ -119,10 +120,10 @@ class _HomePageState extends CommonPageState<HomePage>
           final showSearchBar = showTopBar.value;
           return AnimatedOpacity(
             opacity: showSearchBar ? 1 : 0,
-            duration: const Duration(milliseconds: 300),
+            duration: FluidTokens.durationLg,
             child: AnimatedContainer(
-              curve: Curves.easeInOutCubicEmphasized,
-              duration: const Duration(milliseconds: 500),
+              curve: FluidTokens.curveEmphasized,
+              duration: FluidTokens.durationXxl,
               height: showSearchBar ? Style.topBarHeight : 0,
               padding: padding,
               child: child,

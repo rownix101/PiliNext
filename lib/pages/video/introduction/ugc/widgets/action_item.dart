@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/custom_arc.dart';
 import 'package:PiliNext/utils/extension/theme_ext.dart';
 import 'package:PiliNext/utils/platform_utils.dart';
@@ -103,7 +104,7 @@ class ActionItem extends StatelessWidget {
     );
     if (hasText) {
       return AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
+        duration: FluidTokens.durationLg,
         transitionBuilder: (Widget child, Animation<double> animation) {
           return ScaleTransition(scale: animation, child: child);
         },

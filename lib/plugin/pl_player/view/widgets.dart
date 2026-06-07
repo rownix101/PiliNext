@@ -51,8 +51,8 @@ Widget buildDmChart(
   );
 }
 
-// 进度条高度 + 少量间距
-const _kProgressBarOffset = 14.0;
+// 进度条高度 + 少量间距（适配膨胀态 expandedThumbRadius=10）
+const _kProgressBarOffset = 16.0;
 
 Widget buildSeekPreviewWidget(
   PlPlayerController plPlayerController,
@@ -114,39 +114,56 @@ Widget buildSeekPreviewWidget(
         final posMs = (ratio * totalMs).round();
         final timeStr = DurationUtils.formatDuration(posMs ~/ 1000);
 
-        return Positioned(
-          left: left,
-          bottom: _kProgressBarOffset,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: Style.mdRadius,
-                child: VideoShotImage(
-                  url: url,
-                  x: x,
-                  y: y,
-                  imgXSize: imgXSize,
-                  imgYSize: imgYSize,
-                  height: thumbHeight,
-                  imageCache: plPlayerController.previewCache,
-                  onSetSize: (xSize, ySize) => data
-                    ..imgXSize = imgXSize = xSize
-                    ..imgYSize = imgYSize = ySize,
-                  isMounted: isMounted,
+        return AnimatedSwitcher(
+          duration: FluidTokens.durationSm,
+          switchInCurve: FluidTokens.curveEnter,
+          switchOutCurve: FluidTokens.curveExit,
+          child: Positioned(
+            key: ValueKey(index),
+            left: left,
+            bottom: _kProgressBarOffset,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: Style.mdRadius,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: VideoShotImage(
+                      url: url,
+                      x: x,
+                      y: y,
+                      imgXSize: imgXSize,
+                      imgYSize: imgYSize,
+                      height: thumbHeight,
+                      imageCache: plPlayerController.previewCache,
+                      onSetSize: (xSize, ySize) => data
+                        ..imgXSize = imgXSize = xSize
+                        ..imgYSize = imgYSize = ySize,
+                      isMounted: isMounted,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                timeStr,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                const SizedBox(height: 4),
+                Text(
+                  timeStr,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       });

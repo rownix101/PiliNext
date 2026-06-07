@@ -184,7 +184,7 @@ class _WhisperDetailPageState
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 12),
               )
-            : scrollErrorWidget(onReload: _whisperDetailController.onReload),
+            : const _ConversationEmptyState(),
       Error(:final errMsg) => scrollErrorWidget(
         errMsg: errMsg,
         onReload: _whisperDetailController.onReload,
@@ -418,4 +418,34 @@ class _WhisperDetailPageState
 
   @override
   void onSave() {}
+}
+
+class _ConversationEmptyState extends StatelessWidget {
+  const _ConversationEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 48,
+            color: theme.colorScheme.outlineVariant,
+          ),
+          const SizedBox(height: 14),
+          Text('还没有消息', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(
+            '发送一条消息开始对话',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

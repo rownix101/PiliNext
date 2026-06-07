@@ -1,5 +1,6 @@
 import 'dart:math' show max;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart';
 import 'package:PiliNext/utils/storage_pref.dart';
 import 'package:flutter/gestures.dart' show HorizontalDragGestureRecognizer;
@@ -38,7 +39,7 @@ mixin CommonSlideMixin<T extends CommonSlidePage> on State<T>, TickerProvider {
     if (enableSlide) {
       _animController = AnimationController(
         vsync: this,
-        reverseDuration: const Duration(milliseconds: 500),
+        reverseDuration: FluidTokens.durationXxl,
       );
       _slideDragGestureRecognizer =
           SlideDragGestureRecognizer(

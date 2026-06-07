@@ -3,6 +3,7 @@ import 'package:PiliNext/common/widgets/image/image_save.dart';
 import 'package:PiliNext/common/widgets/image/network_img_layer.dart';
 import 'package:PiliNext/models_new/live/live_search/room_item.dart';
 import 'package:PiliNext/utils/page_utils.dart';
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -51,7 +52,7 @@ class LiveCardVSearch extends StatelessWidget {
                         bottom: 0,
                         child: AnimatedOpacity(
                           opacity: 1,
-                          duration: const Duration(milliseconds: 200),
+                          duration: FluidTokens.durationMd,
                           child: videoStat(context),
                         ),
                       ),

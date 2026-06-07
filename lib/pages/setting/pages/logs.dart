@@ -115,16 +115,18 @@ class _LogsPageState extends State<LogsPage> {
             itemBuilder: (_) => [
               if (kDebugMode)
                 PopupMenuItem(
-                  onTap: () => Timer.periodic(
-                    const Duration(milliseconds: 3500),
-                    (timer) {
-                      Utils.reportError('Manual', StackTrace.current);
-                      if (timer.tick > 3) {
-                        timer.cancel();
-                        if (mounted) getLog();
-                      }
-                    },
-                  ),
+                  onTap: () {
+                    Timer.periodic(
+                      const Duration(milliseconds: 3500),
+                      (t) {
+                        Utils.reportError('Manual', StackTrace.current);
+                        if (t.tick > 3) {
+                          t.cancel();
+                          if (mounted) getLog();
+                        }
+                      },
+                    );
+                  },
                   child: const Text('引发错误'),
                 ),
               PopupMenuItem(

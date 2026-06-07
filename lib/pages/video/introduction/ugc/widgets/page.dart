@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/models_new/video/video_detail/page.dart';
 import 'package:PiliNext/pages/video/controller.dart';
@@ -87,8 +88,8 @@ class _PagesPanelState extends State<PagesPanel> {
     );
     _scrollController.animateTo(
       targetOffset,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      duration: FluidTokens.durationLg,
+      curve: FluidTokens.curveStandard,
     );
   }
 

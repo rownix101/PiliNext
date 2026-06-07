@@ -74,8 +74,8 @@ class _JellyIndicatorState extends State<JellyIndicator>
       _previousIndex = oldWidget.currentIndex.clamp(0, widget.itemCount - 1);
       final jump = (widget.currentIndex - _previousIndex).abs();
       _controller.duration = jump <= 1
-          ? const Duration(milliseconds: 260)
-          : const Duration(milliseconds: 320);
+          ? FluidTokens.durationMd
+          : FluidTokens.durationLg;
       _controller
         ..reset()
         ..forward();

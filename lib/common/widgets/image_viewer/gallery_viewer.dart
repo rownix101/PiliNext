@@ -17,6 +17,7 @@
 
 import 'dart:io' show File, Platform;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/colored_box_transition.dart';
 import 'package:PiliNext/common/widgets/flutter/page/page_view.dart';
 import 'package:PiliNext/common/widgets/gesture/image_horizontal_drag_gesture_recognizer.dart';
@@ -407,8 +408,8 @@ class _GalleryViewerState extends State<GalleryViewer>
           if (nextPage != currPage) {
             _pageController.animateToPage(
               nextPage,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.ease,
+              duration: FluidTokens.durationMd,
+              curve: FluidTokens.curveStandard,
             );
           }
         };

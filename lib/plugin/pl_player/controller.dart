@@ -158,6 +158,7 @@ class PlPlayerController with BlockConfigMixin {
   int? _pgcType;
   VideoType _videoType = VideoType.ugc;
   int _heartDuration = 0;
+  int _lastHeartBeatSecond = -1;
   int? width;
   int? height;
 
@@ -1000,7 +1001,10 @@ class PlPlayerController with BlockConfigMixin {
         for (final element in _positionListeners) {
           element(event);
         }
-        makeHeartBeat(event.inSeconds);
+        if (_lastHeartBeatSecond != event.inSeconds) {
+          _lastHeartBeatSecond = event.inSeconds;
+          makeHeartBeat(event.inSeconds);
+        }
       }),
       stream.duration.listen((Duration event) {
         duration.value = event;
@@ -1636,6 +1640,7 @@ class PlPlayerController with BlockConfigMixin {
       AndroidHelper$ToDart.onUserLeaveHint = null;
     }
     _timer?.cancel();
+    volumeTimer?.cancel();
     // _position.close();
     // _playerEventSubs?.cancel();
     // _sliderPosition.close();
@@ -1730,6 +1735,13 @@ class PlPlayerController with BlockConfigMixin {
 
   Future<void> getVideoShot() async {
     videoShot = await VideoHttp.videoshot(bvid: bvid, cid: cid!);
+    // 数据到达时若用户仍在拖动，立即补一次预览更新
+    if (videoShot case Success() when isSliderMoving.value) {
+      updatePreviewIndex(
+        sliderTempPosition.value.inSeconds,
+        ratio: previewRatio.value,
+      );
+    }
   }
 
   void takeScreenshot() {

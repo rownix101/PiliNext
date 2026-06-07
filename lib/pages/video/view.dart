@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/custom_icon.dart';
@@ -292,6 +293,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
   /// 未开启自动播放时触发播放
   Future<void>? handlePlay() {
+    videoDetailController.autoPlay = true;
     if (!videoDetailController.isFileSource) {
       if (videoDetailController.isQuerying) {
         if (kDebugMode) debugPrint('handlePlay: querying');
@@ -308,7 +310,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
     final plPlayerController = this.plPlayerController =
         videoDetailController.plPlayerController;
-    videoDetailController.autoPlay = true;
     plPlayerController
       ..addStatusLister(playerListener)
       ..addPositionListener(positionListener);
@@ -578,8 +579,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       ),
                       Obx(
                         () {
-                          Widget toolbar() => Opacity(
-                            opacity: videoDetailController.scrollRatio.value,
+                          final scrollRatio = videoDetailController.scrollRatio.value;
+                          if (scrollRatio == 0) return const SizedBox.shrink();
+                          Widget toolbar() => AnimatedOpacity(
+                            duration: FluidTokens.durationMd,
+                            opacity: scrollRatio > 0 ? 1.0 : 0.0,
                             child: Container(
                               color: themeData.colorScheme.surface,
                               alignment: Alignment.topCenter,
@@ -699,6 +703,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                   bottom: -2,
                                   child: GestureDetector(
                                     onTap: () async {
+                                      videoDetailController.autoPlay = true;
                                       if (!videoDetailController.isFileSource) {
                                         if (videoDetailController.isQuerying) {
                                           if (kDebugMode) {

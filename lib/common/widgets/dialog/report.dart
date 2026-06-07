@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/widgets/radio_widget.dart';
 import 'package:PiliNext/http/loading_state.dart';
 import 'package:PiliNext/utils/extension/string_ext.dart';
@@ -31,7 +32,7 @@ Future<void> autoWrapReportDialog(
           Flexible(
             child: SingleChildScrollView(
               child: AnimatedSize(
-                duration: const Duration(milliseconds: 200),
+                duration: FluidTokens.durationMd,
                 child: Builder(
                   builder: (context) => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

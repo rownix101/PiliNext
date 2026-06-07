@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' show max;
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/models/common/publish_panel_type.dart';
 import 'package:PiliNext/utils/extension/context_ext.dart';
 import 'package:PiliNext/utils/storage_pref.dart';
@@ -55,7 +56,7 @@ abstract class CommonPublishPageState<T extends CommonPublishPage>
     initPubState();
 
     if (widget.autofocus) {
-      _requestFocus(duration: const Duration(milliseconds: 300));
+      _requestFocus(duration: FluidTokens.durationLg);
     }
   }
 

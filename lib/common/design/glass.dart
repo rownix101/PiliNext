@@ -83,4 +83,52 @@ abstract final class GlassTokens {
       ),
     );
   }
+
+  /// Full-screen glass overlay — blurs the content behind and tints it.
+  /// Good for modal backdrops, gesture guides, and loading overlays.
+  static Widget modalOverlay({
+    required BuildContext context,
+    double blurSigma = 8,
+    double backgroundOpacity = 0.32,
+    required Widget child,
+    Alignment alignment = Alignment.center,
+  }) {
+    final brightness = Theme.of(context).brightness;
+    final bg = brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: backgroundOpacity)
+        : Colors.white.withValues(alpha: backgroundOpacity);
+
+    return Positioned.fill(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+        child: Container(
+          color: bg,
+          alignment: alignment,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  /// Liquid Glass sheet decoration — ready-to-use [BoxDecoration]
+  /// for bottom sheets, drawers, and slide-up panels.
+  ///
+  /// For a full glass sheet with blur, use [GlassSurface] instead.
+  static BoxDecoration sheetDecoration({
+    required ColorScheme colorScheme,
+    double? opacity,
+  }) {
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final alpha = opacity ?? opacityPanel;
+
+    return BoxDecoration(
+      color: colorScheme.surface.withValues(alpha: alpha),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      border: Border.fromBorderSide(
+        isDark
+            ? borderDark(colorScheme.outlineVariant)
+            : borderLight(colorScheme.outlineVariant),
+      ),
+    );
+  }
 }

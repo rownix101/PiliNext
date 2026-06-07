@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/http/loading_state.dart';
 import 'package:PiliNext/http/member.dart';
 import 'package:PiliNext/http/user.dart';
@@ -259,8 +260,8 @@ class MemberController extends CommonDataController<SpaceData, SpaceData?>
         key.currentState?.outerController.hasClients == true) {
       key.currentState!.outerController.animateTo(
         key.currentState!.outerController.offset,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
+        duration: FluidTokens.durationXxl,
+        curve: FluidTokens.curveStandard,
       );
     }
   }

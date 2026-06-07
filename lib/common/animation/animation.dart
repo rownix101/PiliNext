@@ -6,6 +6,8 @@
 /// ```
 library;
 
+export 'directional_transition.dart';
 export 'fluid_tokens.dart';
 export 'fluid_transition.dart';
 export 'jelly_indicator.dart';
+export 'stagger_animation.dart';

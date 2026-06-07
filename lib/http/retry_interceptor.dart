@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:http2/http2.dart';
 
@@ -5,6 +7,7 @@ class RetryInterceptor extends Interceptor {
   final Dio _client;
   final int _count;
   final int _delay;
+  final _random = Random();
 
   RetryInterceptor(this._client, this._count, this._delay);
 
@@ -53,15 +56,17 @@ class RetryInterceptor extends Interceptor {
         case DioExceptionType.connectionError:
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
         case DioExceptionType.unknown:
           if ((err.requestOptions.extra['_rt'] ??= 0) < _count &&
               err.error
                   is! TransportConnectionException // 网络中断, 此时请求可能已经被服务器所接收
                   ) {
+            final retryIndex = ++err.requestOptions.extra['_rt'] as int;
+            final jitter = _random.nextInt(200);
+            final backoff = (_delay * pow(2, retryIndex)).toInt() + jitter;
             Future.delayed(
-              Duration(
-                milliseconds: ++err.requestOptions.extra['_rt'] * _delay,
-              ),
+              Duration(milliseconds: backoff),
               () => _client
                   .fetch(err.requestOptions)
                   .then(handler.resolve)
