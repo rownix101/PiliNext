@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/assets.dart';
 import 'package:PiliNext/common/constants.dart';
+import 'package:PiliNext/common/design/design_tokens.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/cropped_image.dart';
 import 'package:PiliNext/common/widgets/custom_icon.dart';
@@ -132,6 +133,12 @@ class PLVideoPlayer extends StatefulWidget {
 
 class _PLVideoPlayerState extends State<PLVideoPlayer>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  static String _formatPlaybackSpeed(double speed) {
+    return speed == speed.truncateToDouble()
+        ? speed.toInt().toString()
+        : speed.toString();
+  }
+
   late VideoController videoController;
   late final CommonIntroController introController = widget.introController!;
   late final VideoDetailController videoDetailController =
@@ -756,37 +763,52 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
       /// 播放速度
       BottomControlType.speed => Obx(
-        () => PopupMenuButton<double>(
-          tooltip: '倍速',
-          requestFocus: false,
-          initialValue: plPlayerController.playbackSpeed,
-          color: colorScheme.surfaceContainerHigh.withValues(alpha: 0.95),
-          itemBuilder: (context) {
-            return plPlayerController.speedList
-                .map(
-                  (double speed) => PopupMenuItem<double>(
-                    height: 35,
-                    padding: const EdgeInsets.only(left: 30),
-                    value: speed,
-                    onTap: () => plPlayerController.setPlaybackSpeed(speed),
-                    child: Text(
-                      "${speed}X",
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      semanticsLabel: "$speed倍速",
-                    ),
-                  ),
-                )
-                .toList();
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              "${plPlayerController.playbackSpeed}X",
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-              semanticsLabel: "${plPlayerController.playbackSpeed}倍速",
+        () {
+          final currentSpeed = plPlayerController.playbackSpeed;
+          return PopupMenuButton<void>(
+            tooltip: '倍速',
+            requestFocus: false,
+            position: PopupMenuPosition.over,
+            offset: const Offset(0, -8),
+            constraints: const BoxConstraints(minWidth: 288, maxWidth: 288),
+            menuPadding: EdgeInsets.zero,
+            color: const Color(0xF21B1C20),
+            elevation: 16,
+            shadowColor: Colors.black.withValues(alpha: 0.45),
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: AppRadii.mdAll,
+              side: BorderSide(
+                color: Colors.white.withValues(alpha: 0.10),
+              ),
             ),
-          ),
-        ),
+            popUpAnimationStyle: const AnimationStyle(
+              duration: FluidTokens.durationSm,
+              reverseDuration: FluidTokens.durationSm,
+              curve: FluidTokens.curveEnter,
+              reverseCurve: FluidTokens.curveExit,
+            ),
+            itemBuilder: (context) => [
+              PlaybackSpeedMenuEntry(
+                initialSpeed: currentSpeed,
+                presetSpeeds: plPlayerController.speedList,
+                onSpeedChanged: plPlayerController.setPlaybackSpeed,
+              ),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                '${_formatPlaybackSpeed(currentSpeed)}x',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                semanticsLabel: '${_formatPlaybackSpeed(currentSpeed)}倍速',
+              ),
+            ),
+          );
+        },
       ),
 
       BottomControlType.qa => Obx(
@@ -929,13 +951,17 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     ];
     return PlayerBar(
       children: [
-        Row(
-          mainAxisSize: .min,
-          children: userSpecifyItemLeft.map(progressWidget).toList(),
+        PlayerControlSurface(
+          child: Row(
+            mainAxisSize: .min,
+            children: userSpecifyItemLeft.map(progressWidget).toList(),
+          ),
         ),
-        Row(
-          mainAxisSize: .min,
-          children: userSpecifyItemRight.map(progressWidget).toList(),
+        PlayerControlSurface(
+          child: Row(
+            mainAxisSize: .min,
+            children: userSpecifyItemRight.map(progressWidget).toList(),
+          ),
         ),
       ],
     );
@@ -1635,6 +1661,16 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           },
         ),
 
+        Obx(
+          () => Positioned.fill(
+            child: PlayerOverlayScrim(
+              visible:
+                  plPlayerController.showControls.value &&
+                  !plPlayerController.controlsLock.value,
+            ),
+          ),
+        ),
+
         // 头部、底部控制条
         Positioned.fill(
           top: -1,
@@ -1644,39 +1680,48 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Obx(() => GlassControlBar(
-                    isTop: true,
-                    visible: plPlayerController.showControls.value &&
-                        !plPlayerController.controlsLock.value,
-                    isFullScreen: isFullScreen,
-                    removeSafeArea: plPlayerController.removeSafeArea,
-                    child: plPlayerController.isDesktopPip
-                        ? GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onPanStart: (_) => windowManager.startDragging(),
-                            child: widget.headerControl,
-                          )
-                        : widget.headerControl,
-                  )),
-                  Obx(() => GlassControlBar(
-                    isTop: false,
-                    visible: plPlayerController.showControls.value &&
-                        !plPlayerController.controlsLock.value,
-                    isFullScreen: isFullScreen,
-                    removeSafeArea: plPlayerController.removeSafeArea,
-                    child:
-                        widget.bottomControl ??
-                        BottomControl(
-                          maxWidth: maxWidth,
-                          isFullScreen: isFullScreen,
-                          controller: plPlayerController,
-                          videoDetailController: videoDetailController,
-                          buildBottomControl: () => buildBottomControl(
-                            videoDetailController,
-                            maxWidth > maxHeight,
+                  Obx(
+                    () => GlassControlBar(
+                      isTop: true,
+                      visible:
+                          plPlayerController.showControls.value &&
+                          !plPlayerController.controlsLock.value,
+                      isFullScreen: isFullScreen,
+                      removeSafeArea: plPlayerController.removeSafeArea,
+                      child: plPlayerController.isDesktopPip
+                          ? GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onPanStart: (_) => windowManager.startDragging(),
+                              child: widget.headerControl,
+                            )
+                          : widget.headerControl,
+                    ),
+                  ),
+                  Obx(
+                    () => GlassControlBar(
+                      isTop: false,
+                      visible:
+                          plPlayerController.showControls.value &&
+                          !plPlayerController.controlsLock.value,
+                      isFullScreen: isFullScreen,
+                      removeSafeArea: plPlayerController.removeSafeArea,
+                      child:
+                          widget.bottomControl ??
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: BottomControl(
+                              maxWidth: maxWidth,
+                              isFullScreen: isFullScreen,
+                              controller: plPlayerController,
+                              videoDetailController: videoDetailController,
+                              buildBottomControl: () => buildBottomControl(
+                                videoDetailController,
+                                maxWidth > maxHeight,
+                              ),
+                            ),
                           ),
-                        ),
-                  )),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1720,15 +1765,15 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                       ),
                       onPressed: () async {
                         showRestoreScaleBtn.value = false;
-                    final animController = AnimationController(
-                      vsync: this,
-                      duration: FluidTokens.durationMd,
-                    );
-                    final anim = animController.drive(
-                      Matrix4Tween(
-                        begin: _transformationController.value,
-                        end: Matrix4.identity(),
-                      ).chain(CurveTween(curve: FluidTokens.curveEnter)),
+                        final animController = AnimationController(
+                          vsync: this,
+                          duration: FluidTokens.durationMd,
+                        );
+                        final anim = animController.drive(
+                          Matrix4Tween(
+                            begin: _transformationController.value,
+                            end: Matrix4.identity(),
+                          ).chain(CurveTween(curve: FluidTokens.curveEnter)),
                         );
                         void listener() {
                           _transformationController.value = anim.value;
@@ -1868,10 +1913,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                       offstage: !plPlayerController.showControls.value,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest
-                              .withValues(alpha: 0.45),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(8)),
+                          color: colorScheme.surfaceContainerHighest.withValues(
+                            alpha: 0.45,
+                          ),
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(8),
+                          ),
                         ),
                         child: Obx(() {
                           final controlsLock =
@@ -1914,10 +1961,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                       offstage: !plPlayerController.showControls.value,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest
-                              .withValues(alpha: 0.45),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(8)),
+                          color: colorScheme.surfaceContainerHighest.withValues(
+                            alpha: 0.45,
+                          ),
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(8),
+                          ),
                         ),
                         child: ComBtn(
                           tooltip: '截图',
@@ -1953,10 +2002,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.75),
-                    borderRadius:
-                        const BorderRadius.all(Radius.circular(24)),
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.75,
+                    ),
+                    borderRadius: const BorderRadius.all(Radius.circular(24)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.15),
@@ -2017,10 +2066,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.75),
-                    borderRadius:
-                        const BorderRadius.all(Radius.circular(24)),
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.75,
+                    ),
+                    borderRadius: const BorderRadius.all(Radius.circular(24)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.15),

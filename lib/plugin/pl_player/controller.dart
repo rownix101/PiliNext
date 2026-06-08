@@ -24,6 +24,7 @@ import 'package:PiliNext/plugin/pl_player/models/double_tap_type.dart';
 import 'package:PiliNext/plugin/pl_player/models/duration.dart';
 import 'package:PiliNext/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliNext/plugin/pl_player/models/heart_beat_type.dart';
+import 'package:PiliNext/plugin/pl_player/models/hwdec_type.dart';
 import 'package:PiliNext/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliNext/plugin/pl_player/models/play_status.dart';
 import 'package:PiliNext/plugin/pl_player/models/video_fit_type.dart';
@@ -198,6 +199,11 @@ class PlPlayerController with BlockConfigMixin {
   late final RxBool flipY = false.obs;
 
   final RxBool isBuffering = true.obs;
+
+  int _baseBufferSize = 16 * 1024 * 1024;
+  int _adaptiveBufferLevel = 0;
+  Timer? _bufferResetTimer;
+  DateTime _lastBufferStart = DateTime.now();
 
   /// 全屏方向
   bool get isVertical => _isVertical;
@@ -376,6 +382,7 @@ class PlPlayerController with BlockConfigMixin {
   late int cacheAudioQa = Pref.defaultAudioQa;
   bool enableHeart = true;
   late final String? hwdec = Pref.enableHA ? Pref.hardwareDecoding : null;
+  bool _hwdecFallbackAttempted = false;
 
   late final progressType = Pref.btmProgressBehavior;
   late final enableQuickDouble = Pref.enableQuickDouble;
@@ -654,6 +661,10 @@ class PlPlayerController with BlockConfigMixin {
       // _playbackSpeed.value = speed;
       // 初始化数据加载状态
       dataStatus.value = DataStatus.loading;
+      _bufferResetTimer?.cancel();
+      _bufferResetTimer = null;
+      _adaptiveBufferLevel = 0;
+      _hwdecFallbackAttempted = false;
       // 初始化全屏方向
       _isVertical = isVertical ?? false;
       _aid = aid;
@@ -662,6 +673,12 @@ class PlPlayerController with BlockConfigMixin {
       _epid = epid;
       _seasonId = seasonId;
       _pgcType = pgcType;
+      _isAnim = _pgcType == 1 || _pgcType == 4;
+      if (_isAnim && superResolutionType.value == SuperResolutionType.disable) {
+        superResolutionType.value = Pref.superResolutionType;
+      } else if (!_isAnim) {
+        superResolutionType.value = SuperResolutionType.disable;
+      }
 
       if (showSeekPreview) {
         _clearPreview();
@@ -730,9 +747,10 @@ class PlPlayerController with BlockConfigMixin {
     );
   }
 
-  late final isAnim = _pgcType == 1 || _pgcType == 4;
+  bool _isAnim = false;
+  bool get isAnim => _isAnim;
   late final Rx<SuperResolutionType> superResolutionType =
-      (isAnim ? Pref.superResolutionType : SuperResolutionType.disable).obs;
+      SuperResolutionType.disable.obs;
   Future<void> setShader([SuperResolutionType? type, NativePlayer? pp]) async {
     if (type == null) {
       type = superResolutionType.value;
@@ -787,32 +805,48 @@ class PlPlayerController with BlockConfigMixin {
       opt['autosync'] = autosync;
     }
 
-    final player = await Player.create(
-      configuration: PlayerConfiguration(
-        bufferSize: Pref.expandBuffer
-            ? (isLive ? 64 * 1024 * 1024 : 32 * 1024 * 1024)
-            : (isLive ? 16 * 1024 * 1024 : 4 * 1024 * 1024),
-        logLevel: kDebugMode ? .warn : .error,
-        options: opt,
-      ),
-    );
+    final bufferSize = Pref.expandBuffer
+        ? (isLive ? 128 * 1024 * 1024 : 64 * 1024 * 1024)
+        : (isLive ? 32 * 1024 * 1024 : 16 * 1024 * 1024);
+    _baseBufferSize = bufferSize;
+
+    Player? player;
+    try {
+      player = await Player.create(
+        configuration: PlayerConfiguration(
+          bufferSize: bufferSize,
+          logLevel: kDebugMode ? .warn : .error,
+          options: opt,
+        ),
+      );
+    } catch (e) {
+      dataStatus.value = DataStatus.error;
+      rethrow;
+    }
 
     assert(_videoController == null);
 
-    _videoController = await VideoController.create(
-      player,
-      configuration: VideoControllerConfiguration(
-        enableHardwareAcceleration: hwdec != null,
-        androidAttachSurfaceAfterVideoParameters: false,
-        hwdec: hwdec,
-      ),
-    );
+    try {
+      _videoController = await VideoController.create(
+        player,
+        configuration: VideoControllerConfiguration(
+          enableHardwareAcceleration:
+              hwdec != null && hwdec != HwDecType.no.hwdec,
+          androidAttachSurfaceAfterVideoParameters: false,
+          hwdec: hwdec,
+        ),
+      );
+    } catch (e) {
+      player.dispose();
+      _videoController = null;
+      dataStatus.value = DataStatus.error;
+      rethrow;
+    }
 
     player.setMediaHeader(
       userAgent: BrowserUa.pc,
       referer: HttpString.baseUrl,
     );
-    // await player.setAudioTrack(.auto());
 
     _startListeners(player);
 
@@ -883,14 +917,19 @@ class PlPlayerController with BlockConfigMixin {
       }
     }
 
-    await player.open(
-      Media(
-        video,
-        start: seekTo,
-        extras: extras.isEmpty ? null : extras,
-      ),
-      play: false,
-    );
+    try {
+      await player.open(
+        Media(
+          video,
+          start: seekTo,
+          extras: extras.isEmpty ? null : extras,
+        ),
+        play: false,
+      );
+    } catch (e) {
+      dataStatus.value = DataStatus.error;
+      rethrow;
+    }
   }
 
   Future<void>? refreshPlayer() {
@@ -1014,6 +1053,11 @@ class PlPlayerController with BlockConfigMixin {
       }),
       stream.buffering.listen((bool event) {
         isBuffering.value = event;
+        if (event) {
+          _lastBufferStart = DateTime.now();
+        } else {
+          _onBufferCompleted();
+        }
         videoPlayerServiceHandler?.onStatusChange(
           playerStatus.value,
           event,
@@ -1077,7 +1121,14 @@ class PlPlayerController with BlockConfigMixin {
             },
           );
         } else if (event.startsWith('Could not open codec')) {
-          SmartDialog.showToast('无法加载解码器, $event，可能会切换至软解');
+          if (_hwdecFallbackAttempted) {
+            SmartDialog.showToast('解码失败: $event');
+            return;
+          }
+          _hwdecFallbackAttempted = true;
+          SmartDialog.showToast('无法加载解码器, $event，已切换至软解');
+          _videoPlayerController?.setProperty('hwdec', 'no');
+          Future.delayed(const Duration(milliseconds: 500), refreshPlayer);
         } else if (!onlyPlayAudio.value) {
           if (event.startsWith("error running") ||
               event.startsWith("Failed to open .") ||
@@ -1132,10 +1183,6 @@ class PlPlayerController with BlockConfigMixin {
     _heartDuration = position.inSeconds;
 
     Future<void> seek() async {
-      if (isSeek) {
-        /// 拖动进度条调节时，不等待第一帧，防止抖动
-        await _videoPlayerController?.stream.buffer.first;
-      }
       danmakuController?.clear();
       try {
         await _videoPlayerController?.seek(position);
@@ -1606,6 +1653,35 @@ class PlPlayerController with BlockConfigMixin {
   bool _isCloseAll = false;
   bool get isCloseAll => _isCloseAll;
 
+  void _onBufferCompleted() {
+    final elapsed = DateTime.now().difference(_lastBufferStart);
+    if (elapsed < const Duration(seconds: 2)) {
+      _adaptiveBufferLevel++;
+      if (_adaptiveBufferLevel >= 3) {
+        _increaseBuffer();
+      }
+    }
+    _bufferResetTimer?.cancel();
+    _bufferResetTimer = Timer(const Duration(seconds: 30), () {
+      _adaptiveBufferLevel = 0;
+      _bufferResetTimer = null;
+    });
+  }
+
+  void _increaseBuffer() {
+    if (_videoPlayerController == null) return;
+    final newSize = (_baseBufferSize * (2 + _adaptiveBufferLevel)).clamp(
+      _baseBufferSize,
+      isLive ? 256 * 1024 * 1024 : 128 * 1024 * 1024,
+    );
+    try {
+      _videoPlayerController!.setProperty(
+        'demuxer-max-bytes',
+        newSize.toString(),
+      );
+    } catch (_) {}
+  }
+
   Future<void>? resetScreenRotation() {
     if (horizontalScreen) {
       return fullMode();
@@ -1649,6 +1725,9 @@ class PlPlayerController with BlockConfigMixin {
     }
     _timer?.cancel();
     volumeTimer?.cancel();
+    _bufferResetTimer?.cancel();
+    _bufferResetTimer = null;
+    _adaptiveBufferLevel = 0;
     // _position.close();
     // _playerEventSubs?.cancel();
     // _sliderPosition.close();

@@ -4,6 +4,7 @@ import 'dart:math' show min;
 import 'dart:ui';
 
 import 'package:PiliNext/common/animation/fluid_tokens.dart';
+import 'package:PiliNext/plugin/pl_player/models/data_status.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/pair.dart';
 import 'package:PiliNext/common/widgets/progress_bar/segment_progress_bar.dart';
@@ -755,6 +756,7 @@ class VideoDetailController extends GetxController
     Volume? volume,
     bool autoFullScreenFlag = false,
   }) async {
+    if (plPlayerController.processing) return;
     Duration? seek = seekToTime ?? defaultST ?? playedTime;
     if (seek == null || seek == Duration.zero) {
       seek = getFirstSegment();
@@ -787,7 +789,7 @@ class VideoDetailController extends GetxController
       pgcType: isUgc ? null : pgcType,
       videoType: videoType,
       onInit: () {
-        videoState.value = true;
+        _setVideoStateWhenReady();
         setSubtitle(vttSubtitlesIndex.value);
       },
       width: firstVideo.width,
@@ -815,9 +817,65 @@ class VideoDetailController extends GetxController
     defaultST = null;
   }
 
+  /// 等待播放器产出首帧后再撤掉封面，消除首帧黑屏竞态条件。
+  /// 以 buffer > 0 为可靠信号：demuxer 向 decoder 交付数据后 buffer 才开始增长，
+  /// 此时 decoder 已产出或不出一帧内产出首帧。
+  /// 1.5s 超时兜底，8s 停滞检测并在恢复时自动清除 error。
+  void _setVideoStateWhenReady() {
+    _firstFrameSub?.cancel();
+    _firstFrameSub = null;
+    _stallTimer?.cancel();
+    _stallTimer = null;
+
+    final player = plPlayerController.videoPlayerController;
+    if (player == null) {
+      videoState.value = true;
+      return;
+    }
+
+    bool done = false;
+    bool firstFrameSeen = false;
+    void reveal() {
+      if (done) return;
+      done = true;
+      _firstFrameSub?.cancel();
+      _firstFrameSub = null;
+      _stallTimer?.cancel();
+      _stallTimer = null;
+      if (!isClosed) {
+        videoState.value = true;
+        if (plPlayerController.dataStatus.value == DataStatus.error) {
+          plPlayerController.dataStatus.value = DataStatus.loaded;
+        }
+      }
+    }
+
+    // 监听 buffer：demuxer 产出数据意味着 decoder 即将/已经产出首帧
+    _firstFrameSub = player.stream.buffer.listen((event) {
+      if (event > Duration.zero && player.state.playing) {
+        firstFrameSeen = true;
+        reveal();
+      }
+    });
+
+    // 兜底超时：1.5s 后若仍未收到信号则揭开（网络慢/大码率场景）
+    Future.delayed(const Duration(milliseconds: 1500), reveal);
+
+    // 停滞检测：8 秒后若一直未收到 buffer 数据，标记为加载失败
+    _stallTimer = Timer(const Duration(seconds: 8), () {
+      if (isClosed || done) return;
+      if (!firstFrameSeen && plPlayerController.isBuffering.value) {
+        plPlayerController.dataStatus.value = DataStatus.error;
+      }
+    });
+  }
+
   bool isQuerying = false;
   int _videoUrlRequestGeneration = 0;
   _PendingVideoUrlQuery? _pendingVideoUrlQuery;
+
+  StreamSubscription? _firstFrameSub;
+  Timer? _stallTimer;
 
   final languages = Rxn<List<LanguageItem>>();
   final currLang = Rxn<String>();
@@ -1308,6 +1366,10 @@ class VideoDetailController extends GetxController
 
   @override
   void onClose() {
+    _firstFrameSub?.cancel();
+    _firstFrameSub = null;
+    _stallTimer?.cancel();
+    _stallTimer = null;
     cid.close();
     if (isFileSource) {
       cacheLocalProgress();

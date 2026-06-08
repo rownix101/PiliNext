@@ -579,7 +579,8 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       ),
                       Obx(
                         () {
-                          final scrollRatio = videoDetailController.scrollRatio.value;
+                          final scrollRatio =
+                              videoDetailController.scrollRatio.value;
                           if (scrollRatio == 0) return const SizedBox.shrink();
                           Widget toolbar() => AnimatedOpacity(
                             duration: FluidTokens.durationMd,

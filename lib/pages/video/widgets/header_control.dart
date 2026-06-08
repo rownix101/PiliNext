@@ -35,6 +35,7 @@ import 'package:PiliNext/pages/video/widgets/header_mixin.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
 import 'package:PiliNext/plugin/pl_player/models/data_source.dart';
 import 'package:PiliNext/plugin/pl_player/models/play_repeat.dart';
+import 'package:PiliNext/plugin/pl_player/widgets/settings_panel.dart';
 import 'package:PiliNext/services/shutdown_timer_service.dart'
     show shutdownTimerService;
 import 'package:PiliNext/utils/accounts.dart';
@@ -359,8 +360,289 @@ class HeaderControlState extends State<HeaderControl>
     }
   }
 
+  /// 获取当前播放器区域的 Size（用于右侧面板定位）。
+  Size get _playerSize {
+    final ctx = context;
+    final box = ctx.findRenderObject();
+    if (box is RenderBox && box.hasSize) {
+      // AppBar 本身很小，向上走到真正的播放器容器尺寸。
+      // 我们用屏幕尺寸作为保守估计，面板本身 Positioned 在 Overlay 内。
+    }
+    final mq = MediaQuery.sizeOf(ctx);
+    return mq;
+  }
+
   /// 设置面板
+  ///
+  /// 全屏（横屏）时：YouTube 风格右侧滑出玻璃面板。
+  /// 竖屏 / 非全屏时：沿用现有 bottom sheet。
   void showSettingSheet() {
+    if (isFullScreen) {
+      _showGlassSettingsPanel();
+    } else {
+      _showLegacySettingSheet();
+    }
+  }
+
+  /// YouTube-style right-side glass panel（全屏模式）
+  void _showGlassSettingsPanel() {
+    late final OverlayEntry entry;
+    void dismiss() {
+      if (entry.mounted) entry.remove();
+    }
+
+    final tiles = _buildSettingsTiles(dismiss);
+    entry = OverlayEntry(
+      builder: (_) => GlassSettingsPanel(
+        playerSize: _playerSize,
+        rootTitle: '设置',
+        rootTiles: tiles,
+        onDismissed: () {
+          if (entry.mounted) entry.remove();
+        },
+      ),
+    );
+    Overlay.of(context).insert(entry);
+  }
+
+  /// Builds the flat list of [SettingsTile] entries for the glass panel.
+  List<SettingsTile> _buildSettingsTiles(VoidCallback dismiss) {
+    return [
+      // ── 稍后再看 ────────────────────────────────────────────────────────────
+      ActionTile(
+        icon: const Icon(Icons.watch_later_outlined),
+        title: '添加至「稍后再看」',
+        onTap: () {
+          dismiss();
+          introController.viewLater();
+        },
+      ),
+
+      // ── 查看笔记 ─────────────────────────────────────────────────────────────
+      if (videoDetailCtr.epId == null)
+        ActionTile(
+          icon: const Icon(Icons.note_alt_outlined),
+          title: '查看笔记',
+          onTap: () {
+            dismiss();
+            videoDetailCtr.showNoteList(context);
+          },
+        ),
+
+      // ── 离线缓存 ─────────────────────────────────────────────────────────────
+      if (!isFileSource)
+        ActionTile(
+          icon: const Icon(MdiIcons.folderDownloadOutline),
+          title: '离线缓存',
+          onTap: () {
+            dismiss();
+            videoDetailCtr.onDownload(context);
+          },
+        ),
+
+      // ── 保存封面 ─────────────────────────────────────────────────────────────
+      if (widget.videoDetailCtr.cover.value.isNotEmpty)
+        ActionTile(
+          icon: const Icon(Icons.image_outlined),
+          title: '保存封面',
+          onTap: () {
+            dismiss();
+            ImageUtils.downloadImg([widget.videoDetailCtr.cover.value]);
+          },
+        ),
+
+      // ── 定时关闭 ─────────────────────────────────────────────────────────────
+      ActionTile(
+        icon: const Icon(Icons.hourglass_top_outlined),
+        title: '定时关闭',
+        onTap: () {
+          dismiss();
+          shutdownTimerService.showScheduleExitDialog(
+            context,
+            isFullScreen: isFullScreen,
+          );
+        },
+      ),
+
+      // ── 播放地址 / 重载 ────────────────────────────────────────────────────────
+      if (!isFileSource) ...[
+        ActionTile(
+          icon: const Icon(Icons.link),
+          title: '播放地址',
+          onTap: () {
+            dismiss();
+            videoDetailCtr.editPlayUrl();
+          },
+        ),
+        ActionTile(
+          icon: const Icon(Icons.refresh_outlined),
+          title: '重载视频',
+          onTap: () {
+            dismiss();
+            videoDetailCtr.queryVideoUrl(
+              defaultST: videoDetailCtr.playedTime,
+              fromReset: true,
+            );
+          },
+        ),
+      ],
+
+      // ── 超分辨率 ──────────────────────────────────────────────────────────────
+      SelectionTile<SuperResolutionType>(
+        icon: const Icon(Icons.stay_current_landscape_outlined),
+        title: '超分辨率',
+        getValue: () => plPlayerController.superResolutionType.value,
+        labelOf: (v) => v.label,
+        items: SuperResolutionType.values,
+        onSelect: (v, pop) {
+          plPlayerController.setShader(v);
+          pop();
+        },
+      ),
+
+      // ── CDN 设置 ──────────────────────────────────────────────────────────────
+      if (!isFileSource)
+        ActionTile(
+          icon: const Icon(MdiIcons.cloudPlusOutline),
+          title: 'CDN 设置',
+          subtitle: '当前：${VideoUtils.cdnService.desc}',
+          onTap: () async {
+            dismiss();
+            final result = await showDialog<CDNService>(
+              context: context,
+              builder: (context) =>
+                  CdnSelectDialog(sample: videoInfo.dash?.video?.firstOrNull),
+            );
+            if (result != null) {
+              VideoUtils.cdnService = result;
+              setting.put(SettingBoxKey.CDNService, result.name);
+              SmartDialog.showToast('已设置为 ${result.desc}，正在重载视频');
+              videoDetailCtr.queryVideoUrl(
+                defaultST: videoDetailCtr.playedTime,
+                fromReset: true,
+              );
+            }
+          },
+        ),
+
+      // ── 画质 ──────────────────────────────────────────────────────────────────
+      if (!isFileSource && videoDetailCtr.currentVideoQa.value != null)
+        ActionTile(
+          icon: const Icon(Icons.hd_outlined),
+          title: '选择画质',
+          subtitle: '当前 ${videoDetailCtr.currentVideoQa.value?.desc}',
+          onTap: () {
+            dismiss();
+            showSetVideoQa();
+          },
+        ),
+
+      // ── 音质 ──────────────────────────────────────────────────────────────────
+      if (!isFileSource && videoDetailCtr.currentAudioQa != null)
+        ActionTile(
+          icon: const Icon(Icons.album_outlined),
+          title: '选择音质',
+          subtitle: '当前 ${videoDetailCtr.currentAudioQa!.desc}',
+          onTap: () {
+            dismiss();
+            showSetAudioQa();
+          },
+        ),
+
+      // ── 解码格式 ──────────────────────────────────────────────────────────────
+      if (!isFileSource)
+        ActionTile(
+          icon: const Icon(Icons.av_timer_outlined),
+          title: '解码格式',
+          subtitle: videoDetailCtr.currentDecodeFormats.description,
+          onTap: () {
+            dismiss();
+            showSetDecodeFormats();
+          },
+        ),
+
+      // ── 播放顺序 ──────────────────────────────────────────────────────────────
+      SelectionTile<PlayRepeat>(
+        icon: const Icon(Icons.repeat),
+        title: '播放顺序',
+        getValue: () => plPlayerController.playRepeat,
+        labelOf: (v) => v.label,
+        items: PlayRepeat.values,
+        onSelect: (v, pop) {
+          plPlayerController.setPlayRepeat(v);
+          pop();
+        },
+      ),
+
+      // ── 弹幕列表 ──────────────────────────────────────────────────────────────
+      ActionTile(
+        icon: const Icon(CustomIcons.dm_on),
+        title: '弹幕列表',
+        onTap: () {
+          dismiss();
+          showDanmakuPool();
+        },
+      ),
+
+      // ── 弹幕设置 ──────────────────────────────────────────────────────────────
+      ActionTile(
+        icon: const Icon(CustomIcons.dm_settings),
+        title: '弹幕设置',
+        onTap: () {
+          dismiss();
+          showSetDanmaku();
+        },
+      ),
+
+      // ── 字幕设置 ──────────────────────────────────────────────────────────────
+      ActionTile(
+        icon: const Icon(Icons.subtitles_outlined),
+        title: '字幕设置',
+        onTap: () {
+          dismiss();
+          showSetSubtitle();
+        },
+      ),
+
+      // ── 保存字幕 ──────────────────────────────────────────────────────────────
+      if (!videoDetailCtr.isFileSource && videoDetailCtr.subtitles.isNotEmpty)
+        ActionTile(
+          icon: const Icon(Icons.download_outlined),
+          title: '保存字幕',
+          onTap: () {
+            dismiss();
+            onExportSubtitle();
+          },
+        ),
+
+      // ── 播放信息 ──────────────────────────────────────────────────────────────
+      ActionTile(
+        icon: const Icon(Icons.info_outline),
+        title: '播放信息',
+        onTap: () => showPlayerInfo(
+          context,
+          plPlayerController: plPlayerController,
+        ),
+      ),
+
+      // ── 举报 ──────────────────────────────────────────────────────────────────
+      ActionTile(
+        icon: const Icon(Icons.error_outline),
+        title: '举报',
+        onTap: () {
+          if (!Accounts.main.isLogin) {
+            SmartDialog.showToast('账号未登录');
+            return;
+          }
+          dismiss();
+          PageUtils.reportVideo(videoDetailCtr.aid);
+        },
+      ),
+    ];
+  }
+
+  /// 竖屏 / 非全屏时的原有 bottom sheet 设置菜单（保持不变）
+  void _showLegacySettingSheet() {
     showBottomSheet(
       (context, setState) {
         final theme = Theme.of(context);

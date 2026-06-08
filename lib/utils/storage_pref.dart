@@ -254,12 +254,18 @@ abstract final class Pref {
     defaultValue: VideoDecodeFormatType.AV1.codes.first,
   );
 
-  static String get hardwareDecoding => _setting.get(
-    SettingBoxKey.hardwareDecoding,
-    defaultValue: Platform.isAndroid
-        ? HwDecType.autoSafe.hwdec
-        : HwDecType.auto.hwdec,
-  );
+  static String get hardwareDecoding {
+    final raw = _setting.get(
+      SettingBoxKey.hardwareDecoding,
+      defaultValue: (Platform.isAndroid || Platform.isLinux)
+          ? HwDecType.autoSafe.hwdec
+          : HwDecType.auto.hwdec,
+    );
+    if (Platform.isLinux && raw == HwDecType.auto.hwdec) {
+      return HwDecType.autoSafe.hwdec;
+    }
+    return raw;
+  }
 
   static String get videoSync =>
       _setting.get(SettingBoxKey.videoSync, defaultValue: 'display-resample');

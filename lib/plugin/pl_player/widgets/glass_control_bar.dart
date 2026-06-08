@@ -3,11 +3,10 @@ import 'package:PiliNext/common/design/design_tokens.dart';
 import 'package:PiliNext/common/widgets/view_safe_area.dart';
 import 'package:flutter/material.dart';
 
-/// A glassmorphism player control bar wrapper.
+/// Animates player control bars in and out.
 ///
-/// Applies BackdropFilter blur + semi-transparent surface + subtle border
-/// to any player control bar content. Use as a drop-in background for
-/// [bottom_control.dart] and [header_control.dart].
+/// The control bar no longer paints a full-width background; individual
+/// control groups should opt into [PlayerControlSurface] instead.
 class GlassControlBar extends StatefulWidget {
   const GlassControlBar({
     super.key,
@@ -50,16 +49,20 @@ class _GlassControlBarState extends State<GlassControlBar>
       curve: FluidTokens.curveEnter,
     );
     _slideAnimation = _buildSlideAnimation();
-    _noSlide = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
-        .animate(_curvedAnimation);
+    _noSlide = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset.zero,
+    ).animate(_curvedAnimation);
   }
 
   Animation<Offset> _buildSlideAnimation() {
     final beginOffset = widget.isTop
         ? const Offset(0, -FluidTokens.controlBarDy)
         : const Offset(0, FluidTokens.panelEnterDy);
-    return Tween<Offset>(begin: beginOffset, end: Offset.zero)
-        .animate(_curvedAnimation);
+    return Tween<Offset>(
+      begin: beginOffset,
+      end: Offset.zero,
+    ).animate(_curvedAnimation);
   }
 
   @override
@@ -86,13 +89,7 @@ class _GlassControlBarState extends State<GlassControlBar>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final reduceMotion = FluidTokens.reduceMotionOf(context);
-    final border = isDark
-        ? GlassTokens.borderDark(colorScheme.outlineVariant)
-        : GlassTokens.borderLight(colorScheme.outlineVariant);
 
     final child = widget.removeSafeArea
         ? widget.child
@@ -106,20 +103,81 @@ class _GlassControlBarState extends State<GlassControlBar>
       opacity: _curvedAnimation,
       child: SlideTransition(
         position: reduceMotion ? _noSlide : _slideAnimation,
-        child: GlassTokens.blurFilter(
-          sigma: GlassTokens.blurFloating,
-          child: Container(
-            height: widget.height,
-            decoration: BoxDecoration(
-              color: colorScheme.surface.withValues(
-                alpha: GlassTokens.opacityFloating,
-              ),
-              border: Border(
-                top: widget.isTop ? BorderSide.none : border,
-                bottom: widget.isTop ? border : BorderSide.none,
-              ),
+        child: SizedBox(
+          height: widget.height,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Local contrast surface for a related group of player controls.
+class PlayerControlSurface extends StatelessWidget {
+  const PlayerControlSurface({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = ColorScheme.of(context);
+    const borderRadius = BorderRadius.all(Radius.circular(20));
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: GlassTokens.blurFilter(
+        sigma: GlassTokens.blurFloating,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.34),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.08),
             ),
+          ),
+          child: Padding(
+            padding: padding,
             child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Unified contrast layer behind visible player controls.
+class PlayerOverlayScrim extends StatelessWidget {
+  const PlayerOverlayScrim({
+    super.key,
+    required this.visible,
+  });
+
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedOpacity(
+        opacity: visible ? 1 : 0,
+        duration: FluidTokens.durationMd,
+        curve: FluidTokens.curveStandard,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: 0.48),
+                Colors.black.withValues(alpha: 0.08),
+                Colors.black.withValues(alpha: 0.10),
+                Colors.black.withValues(alpha: 0.56),
+              ],
+              stops: const [0.0, 0.28, 0.58, 1.0],
+            ),
           ),
         ),
       ),

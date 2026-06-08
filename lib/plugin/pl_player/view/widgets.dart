@@ -1,5 +1,237 @@
 part of 'view.dart';
 
+class PlaybackSpeedMenuEntry extends PopupMenuEntry<void> {
+  const PlaybackSpeedMenuEntry({
+    required this.initialSpeed,
+    required this.presetSpeeds,
+    required this.onSpeedChanged,
+    super.key,
+  });
+
+  final double initialSpeed;
+  final List<double> presetSpeeds;
+  final ValueChanged<double> onSpeedChanged;
+
+  @override
+  double get height => 214;
+
+  @override
+  bool represents(void value) => false;
+
+  @override
+  State<PlaybackSpeedMenuEntry> createState() => _PlaybackSpeedMenuEntryState();
+}
+
+class _PlaybackSpeedMenuEntryState extends State<PlaybackSpeedMenuEntry> {
+  static const _minSpeed = 0.25;
+  static const _step = 0.05;
+  static const _presetSpeeds = [0.5, 1.0, 1.5, 2.0];
+
+  late double _speed;
+  late double _maxSpeed;
+
+  @override
+  void initState() {
+    super.initState();
+    _maxSpeed = math.max(
+      3,
+      widget.presetSpeeds.isEmpty ? 3 : widget.presetSpeeds.max,
+    );
+    _speed = widget.initialSpeed.clamp(_minSpeed, _maxSpeed);
+  }
+
+  double _normalizedSpeed(double speed) {
+    return ((speed / _step).round() * _step)
+        .clamp(_minSpeed, _maxSpeed)
+        .toDouble();
+  }
+
+  void _setSpeed(double speed) {
+    final nextSpeed = _normalizedSpeed(speed);
+    setState(() => _speed = nextSpeed);
+    widget.onSpeedChanged(nextSpeed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      label: '播放速度调节',
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              height: 30,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '播放速度',
+                  style: TextStyle(
+                    color: Color(0xB3FFFFFF),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 40,
+              child: Center(
+                child: Text(
+                  '${_speed.toStringAsFixed(2)}x',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 52,
+              child: Row(
+                children: [
+                  _SpeedStepButton(
+                    icon: Icons.remove_rounded,
+                    tooltip: '降低播放速度',
+                    onPressed: _speed <= _minSpeed
+                        ? null
+                        : () => _setSpeed(_speed - _step),
+                  ),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: Colors.white,
+                        inactiveTrackColor: Colors.white.withValues(
+                          alpha: 0.28,
+                        ),
+                        thumbColor: Colors.white,
+                        overlayColor: Colors.white.withValues(alpha: 0.10),
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 7,
+                        ),
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 16,
+                        ),
+                      ),
+                      child: Slider(
+                        value: _speed,
+                        min: _minSpeed,
+                        max: _maxSpeed,
+                        divisions: ((_maxSpeed - _minSpeed) / _step).round(),
+                        semanticFormatterCallback: (value) =>
+                            '${value.toStringAsFixed(2)}倍速',
+                        onChanged: (value) {
+                          setState(() => _speed = _normalizedSpeed(value));
+                        },
+                        onChangeEnd: (value) {
+                          widget.onSpeedChanged(_normalizedSpeed(value));
+                        },
+                      ),
+                    ),
+                  ),
+                  _SpeedStepButton(
+                    icon: Icons.add_rounded,
+                    tooltip: '提高播放速度',
+                    onPressed: _speed >= _maxSpeed
+                        ? null
+                        : () => _setSpeed(_speed + _step),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 40,
+              child: Row(
+                children: [
+                  for (final (index, speed) in _presetSpeeds.indexed) ...[
+                    if (index > 0) const SizedBox(width: 6),
+                    Expanded(
+                      child: Builder(
+                        builder: (context) {
+                          final isSelected = (_speed - speed).abs() < 0.001;
+                          return Semantics(
+                            selected: isSelected,
+                            button: true,
+                            label:
+                                '${_PLVideoPlayerState._formatPlaybackSpeed(speed)}倍速',
+                            child: Material(
+                              color: isSelected
+                                  ? Colors.white.withValues(alpha: 0.18)
+                                  : Colors.white.withValues(alpha: 0.08),
+                              borderRadius: AppRadii.fullAll,
+                              child: InkWell(
+                                borderRadius: AppRadii.fullAll,
+                                onTap: () => _setSpeed(speed),
+                                child: Center(
+                                  child: Text(
+                                    speed == 1
+                                        ? '正常'
+                                        : '${_PLVideoPlayerState._formatPlaybackSpeed(speed)}x',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: isSelected ? 1 : 0.78,
+                                      ),
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SpeedStepButton extends StatelessWidget {
+  const _SpeedStepButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: 36,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        tooltip: tooltip,
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white.withValues(alpha: 0.10),
+          disabledBackgroundColor: Colors.white.withValues(alpha: 0.04),
+          foregroundColor: Colors.white,
+          disabledForegroundColor: Colors.white.withValues(alpha: 0.25),
+        ),
+        icon: Icon(icon, size: 19),
+      ),
+    );
+  }
+}
+
 Widget buildDmChart(
   Color color,
   List<double> dmTrend,
