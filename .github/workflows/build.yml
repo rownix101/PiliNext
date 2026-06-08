@@ -88,10 +88,12 @@ jobs:
               run: |
                   if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
                     echo "${{ secrets.SIGN_KEYSTORE_BASE64 }}" | base64 --decode > android/key.jks
-                    echo storeFile=key.jks >> android/key.properties
-                    echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
-                    echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
-                    echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
+                    cat > android/key.properties << 'END'
+                  storeFile=key.jks
+                  storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+                  keyAlias=${{ secrets.KEY_ALIAS }}
+                  keyPassword=${{ secrets.KEY_PASSWORD }}
+                  END
                   fi
 
             - name: Set and Extract version
