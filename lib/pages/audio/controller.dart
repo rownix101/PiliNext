@@ -314,13 +314,12 @@ class AudioController extends GetxController
     String? referer,
   }) async {
     await _initPlayerIfNeeded();
-    player
-      ?..setMediaHeader(
-        userAgent: ua,
-        // mpv cannot clear referer option
-        headers: {'Referer': ?referer},
-      )
-      ..open(Media(url, start: _start));
+    final native = player!.platform as NativePlayer;
+    native.setProperty('user-agent', ua);
+    if (referer != null) {
+      native.setProperty('referrer', referer);
+    }
+    player!.open(Media(url, start: _start));
     _start = null;
   }
 
@@ -328,13 +327,18 @@ class AudioController extends GetxController
     if (_hasInit) return;
     _hasInit = true;
     assert(player == null, _subscriptions = null);
-    player = await Player.create(
+    player = Player(
       configuration: PlatformUtils.isDesktop
-          ? PlayerConfiguration(
-              options: {'volume': (desktopVolume.value * 100).toString()},
-            )
+          ? const PlayerConfiguration()
           : const PlayerConfiguration(),
     );
+    final native = player!.platform as NativePlayer;
+    if (PlatformUtils.isDesktop) {
+      native.setProperty(
+        'volume',
+        (desktopVolume.value * 100).toString(),
+      );
+    }
     if (isClosed) {
       player!.dispose();
       player = null;

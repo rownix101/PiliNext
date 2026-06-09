@@ -1339,8 +1339,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 () => SubtitleView(
                   controller: videoController,
                   configuration: plPlayerController.subtitleConfig.value,
-                  enableDragSubtitle: plPlayerController.enableDragSubtitle,
-                  onUpdatePadding: plPlayerController.onUpdatePadding,
                 ),
               ),
             ),
@@ -1999,7 +1997,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   child: FittedBox(
                     fit: videoFit.boxFit,
                     alignment: widget.alignment,
-                    child: SimpleVideo(
+                    child: Video(
                       controller: plPlayerController.videoController!,
                       fill: widget.fill,
                       aspectRatio: videoFit.aspectRatio,

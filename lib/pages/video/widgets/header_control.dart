@@ -36,6 +36,7 @@ import 'package:PiliNext/plugin/pl_player/models/data_source.dart';
 import 'package:PiliNext/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliNext/plugin/pl_player/player_tokens.dart'
     show PlayerGlassStyle, PlayerTokens;
+import 'package:media_kit/media_kit.dart';
 import 'package:PiliNext/plugin/pl_player/utils/danmaku_options.dart';
 import 'package:PiliNext/plugin/pl_player/widgets/settings_panel.dart';
 import 'package:PiliNext/services/shutdown_timer_service.dart'
@@ -977,16 +978,16 @@ class HeaderControlState extends State<HeaderControl>
     }
   }
 
-  static void showPlayerInfo(
+  static Future<void> showPlayerInfo(
     BuildContext context, {
     required PlPlayerController plPlayerController,
-  }) {
+  }) async {
     final player = plPlayerController.videoPlayerController;
     if (player == null) {
       SmartDialog.showToast('播放器未初始化');
       return;
     }
-    final hwdec = player.getProperty('hwdec-current');
+    final hwdec = await (player.platform as NativePlayer).getProperty('hwdec-current');
     showDialog(
       context: context,
       builder: (context) {

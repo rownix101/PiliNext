@@ -1187,12 +1187,7 @@ class VideoDetailController extends GetxController
         file = File(subUri);
         if (!file.existsSync()) {
           await file.writeAsString(subtitle.id);
-          if (plPlayerController.videoPlayerController?.disposed == false) {
-            plPlayerController.videoPlayerController!.release.add(file.tryDel);
-          } else {
-            file.tryDel();
-            return;
-          }
+          file.tryDel();
         }
       }
       await plPlayerController.videoPlayerController?.setSubtitleTrack(

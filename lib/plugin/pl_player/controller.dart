@@ -71,6 +71,9 @@ class PlPlayerController with BlockConfigMixin {
   Player? _videoPlayerController;
   VideoController? _videoController;
 
+  NativePlayer? get _nativePlayer =>
+      _videoPlayerController?.platform as NativePlayer?;
+
   // 添加一个私有静态变量来保存实例
   static PlPlayerController? _instance;
 
@@ -253,8 +256,8 @@ class PlPlayerController with BlockConfigMixin {
 
     final Size size;
     final state = videoPlayerController!.state;
-    int width = state.width;
-    int height = state.height;
+    int width = state.width ?? 0;
+    int height = state.height ?? 0;
     if (width == 0) {
       width = this.width ?? 16;
     }
@@ -418,17 +421,6 @@ class PlPlayerController with BlockConfigMixin {
     final subTitleStyle = this.subTitleStyle;
     return SubtitleViewConfiguration(
       style: subTitleStyle,
-      strokeStyle: subtitleBgOpacity == 0
-          ? subTitleStyle.copyWith(
-              color: null,
-              background: null,
-              backgroundColor: null,
-              foreground: Paint()
-                ..color = Colors.black
-                ..style = PaintingStyle.stroke
-                ..strokeWidth = subtitleStrokeWidth,
-            )
-          : null,
       padding: EdgeInsets.only(
         left: subtitlePaddingH.toDouble(),
         right: subtitlePaddingH.toDouble(),
@@ -752,7 +744,7 @@ class PlPlayerController with BlockConfigMixin {
   late final Rx<SuperResolutionType> superResolutionType =
       SuperResolutionType.disable.obs;
   Future<void> setShader([SuperResolutionType? type, NativePlayer? pp]) async {
-    if (type == null) {
+    if (type == null || type == superResolutionType.value) {
       type = superResolutionType.value;
     } else {
       superResolutionType.value = type;
@@ -760,7 +752,8 @@ class PlPlayerController with BlockConfigMixin {
         setting.put(SettingBoxKey.superResolutionType, type.index);
       }
     }
-    pp ??= _videoPlayerController!;
+    pp ??= _nativePlayer;
+    if (pp == null) return;
     switch (type) {
       case SuperResolutionType.disable:
         return pp.command(const ['change-list', 'glsl-shaders', 'clr', '']);
@@ -810,13 +803,12 @@ class PlPlayerController with BlockConfigMixin {
         : (isLive ? 32 * 1024 * 1024 : 16 * 1024 * 1024);
     _baseBufferSize = bufferSize;
 
-    Player? player;
+    Player player;
     try {
-      player = await Player.create(
+      player = Player(
         configuration: PlayerConfiguration(
           bufferSize: bufferSize,
           logLevel: kDebugMode ? .warn : .error,
-          options: opt,
         ),
       );
     } catch (e) {
@@ -827,7 +819,7 @@ class PlPlayerController with BlockConfigMixin {
     assert(_videoController == null);
 
     try {
-      _videoController = await VideoController.create(
+      _videoController = VideoController(
         player,
         configuration: VideoControllerConfiguration(
           enableHardwareAcceleration:
@@ -843,12 +835,14 @@ class PlPlayerController with BlockConfigMixin {
       rethrow;
     }
 
-    player.setMediaHeader(
-      userAgent: BrowserUa.pc,
-      referer: HttpString.baseUrl,
-    );
+    final native = player.platform as NativePlayer;
+    native.setProperty('user-agent', BrowserUa.pc);
+    native.setProperty('referrer', HttpString.baseUrl);
+    for (final entry in opt.entries) {
+      native.setProperty(entry.key, entry.value);
+    }
 
-    _startListeners(player);
+    _startListeners(native);
 
     return player;
   }
@@ -936,9 +930,9 @@ class PlPlayerController with BlockConfigMixin {
     if (dataSource is FileSource) {
       return null;
     }
-    if (_videoPlayerController?.current.isNotEmpty ?? false) {
-      return _videoPlayerController!.open(
-        _videoPlayerController!.current.last.copyWith(start: position),
+    if (_nativePlayer?.current.isNotEmpty ?? false) {
+      return _nativePlayer!.open(
+        _nativePlayer!.current.last.copyWith(start: position),
         play: true,
       );
     }
@@ -1127,7 +1121,7 @@ class PlPlayerController with BlockConfigMixin {
           }
           _hwdecFallbackAttempted = true;
           SmartDialog.showToast('无法加载解码器, $event，已切换至软解');
-          _videoPlayerController?.setProperty('hwdec', 'no');
+          _nativePlayer?.setProperty('hwdec', 'no');
           Future.delayed(const Duration(milliseconds: 500), refreshPlayer);
         } else if (!onlyPlayAudio.value) {
           if (event.startsWith("error running") ||
@@ -1675,7 +1669,7 @@ class PlPlayerController with BlockConfigMixin {
       isLive ? 256 * 1024 * 1024 : 128 * 1024 * 1024,
     );
     try {
-      _videoPlayerController!.setProperty(
+      _nativePlayer!.setProperty(
         'demuxer-max-bytes',
         newSize.toString(),
       );

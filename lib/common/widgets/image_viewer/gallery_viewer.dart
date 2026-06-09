@@ -109,8 +109,8 @@ class _GalleryViewerState extends State<GalleryViewer>
 
   Future<void> _initPlayer() async {
     assert(_player == null);
-    final player = await Player.create();
-    _videoController = await VideoController.create(player);
+    final player = Player();
+    _videoController = VideoController(player);
     if (!mounted) {
       player.dispose();
       _videoController = null;
@@ -509,7 +509,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                       _horizontalDragGestureRecognizer,
                   onChangePage: _onChangePage,
                   child: FittedBox(
-                    child: SimpleVideo(
+                    child: Video(
                       controller: _videoController!,
                       fill: Colors.transparent,
                     ),
