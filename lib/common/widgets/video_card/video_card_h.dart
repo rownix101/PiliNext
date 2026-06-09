@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/badge.dart';
 import 'package:PiliNext/common/widgets/image/image_save.dart';
@@ -17,7 +18,7 @@ import 'package:PiliNext/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 // 视频卡片 - 水平布局
-class VideoCardH extends StatelessWidget {
+class VideoCardH extends StatefulWidget {
   const VideoCardH({
     super.key,
     required this.videoItem,
@@ -31,6 +32,68 @@ class VideoCardH extends StatelessWidget {
   final VoidCallback? onRemove;
 
   @override
+  State<VideoCardH> createState() => _VideoCardHState();
+}
+
+class _VideoCardHState extends State<VideoCardH>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _scaleController;
+  late final Animation<double> _scale;
+
+  HorizontalVideoModel get videoItem => widget.videoItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: FluidTokens.durationXs,
+    );
+    _scale = Tween<double>(begin: 1.0, end: FluidTokens.pressScale).animate(
+      CurvedAnimation(parent: _scaleController, curve: FluidTokens.curveEnter),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) {
+    if (FluidTokens.reduceMotionOf(context)) return;
+    _scaleController.animateWith(
+      FluidTokens.simulation(
+        spring: FluidTokens.springCardPress,
+        from: _scaleController.value,
+        to: 1.0,
+        velocity: 0,
+      ),
+    );
+  }
+
+  void _onTapUp(TapUpDetails _) {
+    if (FluidTokens.reduceMotionOf(context)) return;
+    _springRelease();
+  }
+
+  void _onTapCancel() {
+    if (FluidTokens.reduceMotionOf(context)) return;
+    _springRelease();
+  }
+
+  void _springRelease() {
+    _scaleController.animateWith(
+      FluidTokens.simulation(
+        spring: FluidTokens.springCardRelease,
+        from: _scaleController.value,
+        to: 0.0,
+        velocity: 0,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     void onLongPress() => imageSaveDialog(
       bvid: videoItem.bvid,
@@ -38,7 +101,8 @@ class VideoCardH extends StatelessWidget {
       cover: videoItem.cover,
     );
     final theme = Theme.of(context);
-    return Material(
+
+    final cardContent = Material(
       type: .transparency,
       child: Stack(
         clipBehavior: .none,
@@ -46,8 +110,11 @@ class VideoCardH extends StatelessWidget {
           InkWell(
             onLongPress: onLongPress,
             onSecondaryTap: PlatformUtils.isMobile ? null : onLongPress,
+            onTapDown: _onTapDown,
+            onTapUp: _onTapUp,
+            onTapCancel: _onTapCancel,
             onTap:
-                onTap ??
+                widget.onTap ??
                 () async {
                   if (videoItem.isPugv ?? false) {
                     PageUtils.viewPugv(seasonId: videoItem.seasonId);
@@ -176,11 +243,22 @@ class VideoCardH extends StatelessWidget {
             child: VideoPopupMenu(
               iconSize: 17,
               videoItem: videoItem,
-              onRemove: onRemove,
+              onRemove: widget.onRemove,
             ),
           ),
         ],
       ),
+    );
+
+    if (FluidTokens.reduceMotionOf(context)) return cardContent;
+
+    return AnimatedBuilder(
+      animation: _scale,
+      builder: (context, child) => Transform.scale(
+        scale: _scale.value,
+        child: child,
+      ),
+      child: cardContent,
     );
   }
 

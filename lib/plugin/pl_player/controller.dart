@@ -1787,12 +1787,25 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   late final Map<String, ui.Image?> previewCache = {};
+  static const int _previewCacheMaxSize = 8;
   LoadingState<VideoShotData>? videoShot;
   late final RxBool showPreview = false.obs;
   late final showSeekPreview = Pref.showSeekPreview;
   late final previewIndex = RxnInt();
-  // 0.0~1.0，预览图在进度条上的水平位置比例
   final previewRatio = 0.5.obs;
+  final previewCellWidth = 0.0.obs;
+  final previewCellHeight = 0.0.obs;
+
+  void evictLruPreviewCache() {
+    if (previewCache.length <= _previewCacheMaxSize) return;
+    final keysToEvict = previewCache.keys
+        .take(previewCache.length - _previewCacheMaxSize)
+        .toList();
+    for (final key in keysToEvict) {
+      previewCache[key]?.dispose();
+      previewCache.remove(key);
+    }
+  }
 
   void updatePreviewIndex(int seconds, {double ratio = 0.5}) {
     previewRatio.value = ratio;
@@ -1814,6 +1827,8 @@ class PlPlayerController with BlockConfigMixin {
     showPreview.value = false;
     previewIndex.value = null;
     videoShot = null;
+    previewCellWidth.value = 0;
+    previewCellHeight.value = 0;
     for (final i in previewCache.values) {
       i?.dispose();
     }

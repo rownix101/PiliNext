@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/badge.dart';
 import 'package:PiliNext/common/widgets/image/image_save.dart';
@@ -23,7 +24,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
 
 // 视频卡片 - 垂直布局
-class VideoCardV extends StatelessWidget {
+class VideoCardV extends StatefulWidget {
   final BaseRcmdVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
@@ -32,6 +33,75 @@ class VideoCardV extends StatelessWidget {
     required this.videoItem,
     this.onRemove,
   });
+
+  static final shortFormat = DateFormat('M-d');
+  static final longFormat = DateFormat('yy-M-d');
+
+  @override
+  State<VideoCardV> createState() => _VideoCardVState();
+}
+
+class _VideoCardVState extends State<VideoCardV>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _scaleController;
+  late final Animation<double> _scale;
+
+  BaseRcmdVideoItemModel get videoItem => widget.videoItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: FluidTokens.durationXs,
+    );
+    _scale = Tween<double>(begin: 1.0, end: FluidTokens.pressScale).animate(
+      CurvedAnimation(parent: _scaleController, curve: FluidTokens.curveEnter),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) {
+    if (FluidTokens.reduceMotionOf(context)) return;
+    _controllerPress();
+  }
+
+  void _onTapUp(TapUpDetails _) {
+    if (FluidTokens.reduceMotionOf(context)) return;
+    _springRelease();
+  }
+
+  void _onTapCancel() {
+    if (FluidTokens.reduceMotionOf(context)) return;
+    _springRelease();
+  }
+
+  void _controllerPress() {
+    _scaleController.animateWith(
+      FluidTokens.simulation(
+        spring: FluidTokens.springCardPress,
+        from: _scaleController.value,
+        to: 1.0,
+        velocity: 0,
+      ),
+    );
+  }
+
+  void _springRelease() {
+    _scaleController.animateWith(
+      FluidTokens.simulation(
+        spring: FluidTokens.springCardRelease,
+        from: _scaleController.value,
+        to: 0.0,
+        velocity: 0,
+      ),
+    );
+  }
 
   Future<void> onPushDetail() async {
     switch (videoItem.goto) {
@@ -89,7 +159,8 @@ class VideoCardV extends StatelessWidget {
       cover: videoItem.cover,
       bvid: videoItem.bvid,
     );
-    return Stack(
+
+    final cardContent = Stack(
       clipBehavior: Clip.none,
       children: [
         Card(
@@ -98,6 +169,9 @@ class VideoCardV extends StatelessWidget {
             onTap: onPushDetail,
             onLongPress: onLongPress,
             onSecondaryTap: PlatformUtils.isMobile ? null : onLongPress,
+            onTapDown: _onTapDown,
+            onTapUp: _onTapUp,
+            onTapCancel: _onTapCancel,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -148,10 +222,21 @@ class VideoCardV extends StatelessWidget {
             child: VideoPopupMenu(
               iconSize: 17,
               videoItem: videoItem,
-              onRemove: onRemove,
+              onRemove: widget.onRemove,
             ),
           ),
       ],
+    );
+
+    if (FluidTokens.reduceMotionOf(context)) return cardContent;
+
+    return AnimatedBuilder(
+      animation: _scale,
+      builder: (context, child) => Transform.scale(
+        scale: _scale.value,
+        child: child,
+      ),
+      child: cardContent,
     );
   }
 
@@ -238,9 +323,6 @@ class VideoCardV extends StatelessWidget {
     );
   }
 
-  static final shortFormat = DateFormat('M-d');
-  static final longFormat = DateFormat('yy-M-d');
-
   Widget videoStat(BuildContext context, ThemeData theme) {
     return Row(
       children: [
@@ -266,8 +348,8 @@ class VideoCardV extends StatelessWidget {
               ),
               text: DateFormatUtils.dateFormat(
                 videoItem.pubdate,
-                short: shortFormat,
-                long: longFormat,
+                short: VideoCardV.shortFormat,
+                long: VideoCardV.longFormat,
               ),
             ),
           ),

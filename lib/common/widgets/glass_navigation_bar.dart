@@ -1,7 +1,8 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/design/design_tokens.dart';
+import 'package:PiliNext/common/widgets/player_glass_surface.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart'
+    show PlayerGlassStyle;
 import 'package:PiliNext/utils/haptic_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -205,167 +206,144 @@ class _GlassNavigationBarState extends State<GlassNavigationBar>
             right: _safeHorizontalPad(screenWidth, barWidth),
             bottom: effectiveBottomPad,
           ),
-          child: ClipRRect(
+          child: PlayerGlassSurface(
+            sigma: _blurForBreakpoint(bp),
+            backgroundColor: colorScheme.surface.withValues(alpha: 0.30),
             borderRadius: AppRadii.fullAll,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: _blurForBreakpoint(bp),
-                sigmaY: _blurForBreakpoint(bp),
-              ),
-              child: Container(
-                width: barWidth,
-                height: barHeight,
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(
-                    alpha: GlassTokens.opacityFloating,
-                  ),
-                  borderRadius: AppRadii.fullAll,
-                  border: Border.fromBorderSide(
-                    isDark
-                        ? GlassTokens.borderDark(colorScheme.outlineVariant)
-                        : GlassTokens.borderLight(colorScheme.outlineVariant),
-                  ),
-                  boxShadow: AppShadows.of(3, theme.brightness),
-                ),
-                child: Stack(
-                  children: [
-                    // ── Highlight gradient (top reflection) ───────
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: AppRadii.fullAll,
-                            gradient: GlassTokens.highlightGradient(
-                              theme.brightness,
-                            ),
-                          ),
-                        ),
+            interactive: true,
+            thickness: bp == _Breakpoint.desktop ? 1.2 : 1,
+            style: PlayerGlassStyle.liquidGlass,
+            border: Border.fromBorderSide(
+              isDark
+                  ? GlassTokens.borderDark(colorScheme.outlineVariant)
+                  : GlassTokens.borderLight(colorScheme.outlineVariant),
+            ),
+            child: SizedBox(
+              width: barWidth,
+              height: barHeight,
+              child: Stack(
+                children: [
+                  if (widget.destinations.isNotEmpty && itemWidth > 12)
+                    // ── Jelly indicator ──────────────────────────
+                    JellyIndicator(
+                      currentIndex: selectedIndex,
+                      itemCount: widget.destinations.length,
+                      itemWidth: itemWidth,
+                      indicatorHeight: barHeight - 12, // 6dp padding each side
+                      indicatorColor: colorScheme.primary.withValues(
+                        alpha: 0.18,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 6,
                       ),
                     ),
 
-                    if (widget.destinations.isNotEmpty && itemWidth > 12)
-                      // ── Jelly indicator ──────────────────────────
-                      JellyIndicator(
-                        currentIndex: selectedIndex,
-                        itemCount: widget.destinations.length,
-                        itemWidth: itemWidth,
-                        indicatorHeight:
-                            barHeight - 12, // 6dp padding each side
-                        indicatorColor: colorScheme.primary.withValues(
-                          alpha: 0.18,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 6,
-                        ),
-                      ),
+                  // ── Tab items ─────────────────────────────────
+                  Row(
+                    children: () {
+                      // Grow controller list to match current destination count
+                      while (_tabStatesControllers.length <
+                          widget.destinations.length) {
+                        _tabStatesControllers.add(null);
+                      }
+                      return List.generate(
+                        widget.destinations.length,
+                        (i) {
+                          final dest = widget.destinations[i];
+                          final isSelected = i == selectedIndex;
 
-                    // ── Tab items ─────────────────────────────────
-                    Row(
-                      children: () {
-                        // Grow controller list to match current destination count
-                        while (_tabStatesControllers.length <
-                            widget.destinations.length) {
-                          _tabStatesControllers.add(null);
-                        }
-                        return List.generate(
-                          widget.destinations.length,
-                          (i) {
-                            final dest = widget.destinations[i];
-                            final isSelected = i == selectedIndex;
+                          final states = <WidgetState>{
+                            if (isSelected) WidgetState.selected,
+                          };
 
-                            final states = <WidgetState>{
-                              if (isSelected) WidgetState.selected,
-                            };
+                          final effectiveMouseCursor = WidgetStateMouseCursor
+                              .clickable
+                              .resolve(states);
 
-                            final effectiveMouseCursor = WidgetStateMouseCursor
-                                .clickable
-                                .resolve(states);
-
-                            return Expanded(
-                              child: Semantics(
-                                button: true,
-                                selected: isSelected,
-                                label: dest.label,
-                                child: InkWell(
-                                  onTap: () {
-                                    HapticService.tap();
-                                    widget.onDestinationSelected(i);
-                                  },
-                                  mouseCursor: effectiveMouseCursor,
-                                  borderRadius: BorderRadius.circular(
-                                    barHeight,
-                                  ),
-                                  statesController: _tabStatesControllers[i] ??=
-                                      WidgetStatesController(),
-                                  child: SizedBox(
-                                    height: barHeight,
-                                    child: AnimatedScale(
-                                      scale: isSelected ? 1.0 : 0.96,
+                          return Expanded(
+                            child: Semantics(
+                              button: true,
+                              selected: isSelected,
+                              label: dest.label,
+                              child: InkWell(
+                                onTap: () {
+                                  HapticService.tap();
+                                  widget.onDestinationSelected(i);
+                                },
+                                mouseCursor: effectiveMouseCursor,
+                                borderRadius: BorderRadius.circular(
+                                  barHeight,
+                                ),
+                                statesController: _tabStatesControllers[i] ??=
+                                    WidgetStatesController(),
+                                child: SizedBox(
+                                  height: barHeight,
+                                  child: AnimatedScale(
+                                    scale: isSelected ? 1.0 : 0.96,
+                                    duration: FluidTokens.effectiveDuration(
+                                      context,
+                                      FluidTokens.durationSm,
+                                    ),
+                                    curve: FluidTokens.curveEnter,
+                                    child: AnimatedOpacity(
+                                      opacity: isSelected ? 1.0 : 0.72,
                                       duration: FluidTokens.effectiveDuration(
                                         context,
                                         FluidTokens.durationSm,
                                       ),
-                                      curve: FluidTokens.curveEnter,
-                                      child: AnimatedOpacity(
-                                        opacity: isSelected ? 1.0 : 0.72,
-                                        duration: FluidTokens.effectiveDuration(
-                                          context,
-                                          FluidTokens.durationSm,
-                                        ),
-                                        curve: FluidTokens.curveStandard,
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: dest.badge != null
-                                                  ? Badge(
-                                                      isLabelVisible: true,
-                                                      label: dest.badge!,
-                                                      child: isSelected
-                                                          ? dest.selectedIcon
-                                                          : dest.icon,
-                                                    )
-                                                  : (isSelected
+                                      curve: FluidTokens.curveStandard,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: dest.badge != null
+                                                ? Badge(
+                                                    isLabelVisible: true,
+                                                    label: dest.badge!,
+                                                    child: isSelected
                                                         ? dest.selectedIcon
-                                                        : dest.icon),
+                                                        : dest.icon,
+                                                  )
+                                                : (isSelected
+                                                      ? dest.selectedIcon
+                                                      : dest.icon),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            dest.label,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: labelFontSize,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
+                                              color: isSelected
+                                                  ? colorScheme.onSurface
+                                                  : colorScheme.onSurface
+                                                        .withValues(
+                                                          alpha: 0.60,
+                                                        ),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              dest.label,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: labelFontSize,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w400,
-                                                color: isSelected
-                                                    ? colorScheme.onSurface
-                                                    : colorScheme.onSurface
-                                                          .withValues(
-                                                            alpha: 0.60,
-                                                          ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            );
-                          },
-                        );
-                      }(),
-                    ),
-                  ],
-                ),
+                            ),
+                          );
+                        },
+                      );
+                    }(),
+                  ),
+                ],
               ),
             ),
           ),

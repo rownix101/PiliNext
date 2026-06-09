@@ -1,5 +1,6 @@
 import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/animation/fluid_tokens.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:flutter/material.dart';
 
 class ComBtn extends StatefulWidget {
@@ -17,8 +18,8 @@ class ComBtn extends StatefulWidget {
     this.onTap,
     this.onLongPress,
     this.onSecondaryTap,
-    this.width = 34,
-    this.height = 34,
+    this.width = PlayerTokens.buttonSize,
+    this.height = PlayerTokens.buttonSize,
     this.tooltip,
   });
 

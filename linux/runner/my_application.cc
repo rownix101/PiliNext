@@ -1,6 +1,9 @@
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
+#include <unistd.h>
+
+#include <cstdlib>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
 #endif
@@ -16,6 +19,16 @@ G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication *self, FlView *view) {
+  if (const char *ready_fd_value =
+          std::getenv("PILINEXT_RENDERER_READY_FD")) {
+    const int ready_fd = std::atoi(ready_fd_value);
+    if (ready_fd >= 0) {
+      const char signal_byte = 1;
+      write(ready_fd, &signal_byte, 1);
+      close(ready_fd);
+      unsetenv("PILINEXT_RENDERER_READY_FD");
+    }
+  }
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 

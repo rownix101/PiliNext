@@ -3,7 +3,9 @@ import 'package:PiliNext/pages/live_room/controller.dart';
 import 'package:PiliNext/pages/video/widgets/header_mixin.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
 import 'package:PiliNext/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:PiliNext/plugin/pl_player/widgets/common_btn.dart';
+import 'package:PiliNext/plugin/pl_player/widgets/player_popover.dart';
 import 'package:PiliNext/plugin/pl_player/widgets/play_pause_btn.dart';
 import 'package:PiliNext/utils/storage.dart';
 import 'package:PiliNext/utils/storage_key.dart';
@@ -50,21 +52,19 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
         children: [
           PlayOrPauseButton(plPlayerController: plPlayerController),
           ComBtn(
-            height: 30,
             tooltip: '刷新',
             icon: const Icon(
               Icons.refresh,
-              size: 18,
+              size: PlayerTokens.iconSizeSm,
               color: Colors.white,
             ),
             onTap: widget.onRefresh,
           ),
           const Spacer(),
           ComBtn(
-            height: 30,
             tooltip: '屏蔽',
             icon: const Icon(
-              size: 18,
+              size: PlayerTokens.iconSizeSm,
               Icons.block,
               color: Colors.white,
             ),
@@ -87,16 +87,15 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
               final enableShowLiveDanmaku =
                   plPlayerController.enableShowDanmaku.value;
               return ComBtn(
-                height: 30,
                 tooltip: "${enableShowLiveDanmaku ? '关闭' : '开启'}弹幕",
                 icon: enableShowLiveDanmaku
                     ? const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         CustomIcons.dm_on,
                         color: Colors.white,
                       )
                     : const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         CustomIcons.dm_off,
                         color: Colors.white,
                       ),
@@ -114,95 +113,114 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
             },
           ),
           ComBtn(
-            height: 30,
             tooltip: '弹幕设置',
             icon: const Icon(
-              size: 18,
+              size: PlayerTokens.iconSizeSm,
               CustomIcons.dm_settings,
               color: Colors.white,
             ),
             onTap: () => showSetDanmaku(isLive: true),
           ),
           Obx(
-            () => PopupMenuButton<VideoFitType>(
-              tooltip: '画面比例',
-              initialValue: plPlayerController.videoFit.value,
-              color: Colors.black.withValues(alpha: 0.8),
-              itemBuilder: (context) {
-                return VideoFitType.values
-                    .map(
-                      (boxFit) => PopupMenuItem<VideoFitType>(
-                        height: 35,
-                        padding: const EdgeInsets.only(left: 30),
-                        value: boxFit,
-                        onTap: () => plPlayerController.toggleVideoFit(boxFit),
-                        child: Text(
-                          boxFit.desc,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  plPlayerController.videoFit.value.desc,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+            () {
+              final fit = plPlayerController.videoFit.value;
+              return PlayerPopover<VideoFitType>.items(
+                tooltip: '画面比例',
+                trigger: (open) => Padding(
+                  padding: PlayerTokens.popupTriggerPadding,
+                  child: GestureDetector(
+                    onTap: open,
+                    child: Text(
+                      fit.desc,
+                      style: PlayerTokens.popupTrigger,
+                    ),
+                  ),
                 ),
-              ),
-            ),
+                selectedValue: fit,
+                labelOf: (v) => v.desc,
+                items: VideoFitType.values,
+                onSelect: plPlayerController.toggleVideoFit,
+              );
+            },
           ),
           Obx(
-            () => PopupMenuButton<int>(
-              tooltip: '画质',
-              padding: EdgeInsets.zero,
-              initialValue: liveRoomCtr.currentQn,
-              color: Colors.black.withValues(alpha: 0.8),
-              itemBuilder: (context) {
-                return liveRoomCtr.acceptQnList
-                    .map(
-                      (e) => PopupMenuItem<int>(
-                        height: 35,
-                        padding: const EdgeInsets.only(left: 30),
-                        value: e.code,
-                        onTap: () => liveRoomCtr.changeQn(e.code),
-                        child: Text(
-                          e.desc,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
+            () {
+              final currentQn = liveRoomCtr.currentQn;
+              final desc = liveRoomCtr.currentQnDesc.value;
+              final acceptQnList = liveRoomCtr.acceptQnList;
+              return PlayerPopover.builder(
+                tooltip: '画质',
+                trigger: (open) => Padding(
+                  padding: PlayerTokens.popupTriggerPadding,
+                  child: GestureDetector(
+                    onTap: open,
+                    child: Text(
+                      desc,
+                      style: PlayerTokens.popupTrigger,
+                    ),
+                  ),
+                ),
+                builder: (ctx, close) {
+                  final cs = ColorScheme.of(ctx);
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: acceptQnList.map((e) {
+                      final isSelected = e.code == currentQn;
+                      return InkWell(
+                        onTap: () {
+                          close();
+                          liveRoomCtr.changeQn(e.code);
+                        },
+                        splashColor: Colors.white.withValues(alpha: 0.08),
+                        highlightColor: Colors.white.withValues(alpha: 0.04),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  e.desc,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_rounded,
+                                  size: 16,
+                                  color: cs.primary,
+                                ),
+                            ],
                           ),
                         ),
-                      ),
-                    )
-                    .toList();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  liveRoomCtr.currentQnDesc.value,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                ),
-              ),
-            ),
+                      );
+                    }).toList(),
+                  );
+                },
+              );
+            },
           ),
           if (!plPlayerController.isDesktopPip)
             ComBtn(
-              height: 30,
               tooltip: isFullScreen ? '退出全屏' : '全屏',
               icon: isFullScreen
                   ? const Icon(
                       Icons.fullscreen_exit,
-                      size: 24,
+                      size: PlayerTokens.iconSizeLg,
                       color: Colors.white,
                     )
                   : const Icon(
                       Icons.fullscreen,
-                      size: 24,
+                      size: PlayerTokens.iconSizeLg,
                       color: Colors.white,
                     ),
               onTap: () =>

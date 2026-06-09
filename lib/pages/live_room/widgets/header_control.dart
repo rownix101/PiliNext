@@ -4,6 +4,7 @@ import 'package:PiliNext/common/widgets/marquee.dart';
 import 'package:PiliNext/pages/live_room/controller.dart';
 import 'package:PiliNext/pages/video/widgets/header_control.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:PiliNext/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliNext/services/shutdown_timer_service.dart'
     show shutdownTimerService;
@@ -110,9 +111,11 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
         children: [
           if (isFullScreen || plPlayerController.isDesktopPip)
             ComBtn(
-              height: 30,
               tooltip: '返回',
-              icon: const Icon(FontAwesomeIcons.arrowLeft, size: 15),
+              icon: const Icon(
+                FontAwesomeIcons.arrowLeft,
+                size: PlayerTokens.iconSizeXs,
+              ),
               onTap: () {
                 if (plPlayerController.isDesktopPip) {
                   plPlayerController.exitDesktopPip();
@@ -128,16 +131,15 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
             Obx(() {
               final isAlwaysOnTop = plPlayerController.isAlwaysOnTop.value;
               return ComBtn(
-                height: 30,
                 tooltip: '${isAlwaysOnTop ? '取消' : ''}置顶',
                 icon: isAlwaysOnTop
                     ? const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         Icons.push_pin,
                         color: Colors.white,
                       )
                     : const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         Icons.push_pin_outlined,
                         color: Colors.white,
                       ),
@@ -149,7 +151,7 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
               height: 30,
               tooltip: '发弹幕',
               icon: const Icon(
-                size: 18,
+                size: PlayerTokens.iconSizeSm,
                 Icons.comment_outlined,
                 color: Colors.white,
               ),
@@ -169,7 +171,7 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
                 }
               },
               icon: const Icon(
-                size: 18,
+                size: PlayerTokens.iconSizeSm,
                 Icons.picture_in_picture_outlined,
                 color: Colors.white,
               ),
@@ -178,7 +180,6 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
             () {
               final onlyPlayAudio = plPlayerController.onlyPlayAudio.value;
               return ComBtn(
-                height: 30,
                 tooltip: '仅播放音频',
                 onTap: () {
                   plPlayerController.onlyPlayAudio.value = !onlyPlayAudio;
@@ -186,12 +187,12 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
                 },
                 icon: onlyPlayAudio
                     ? const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         MdiIcons.musicCircle,
                         color: Colors.white,
                       )
                     : const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         MdiIcons.musicCircleOutline,
                         color: Colors.white,
                       ),
@@ -203,17 +204,16 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
               final continuePlayInBackground =
                   plPlayerController.continuePlayInBackground.value;
               return ComBtn(
-                height: 30,
                 tooltip: '${continuePlayInBackground ? '关闭' : ''}后台播放',
                 onTap: plPlayerController.setContinuePlayInBackground,
                 icon: continuePlayInBackground
                     ? const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         Icons.play_circle,
                         color: Colors.white,
                       )
                     : const Icon(
-                        size: 18,
+                        size: PlayerTokens.iconSizeSm,
                         Icons.play_circle_outline,
                         color: Colors.white,
                       ),
@@ -228,7 +228,7 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
               isLive: true,
             ),
             icon: const Icon(
-              size: 18,
+              size: PlayerTokens.iconSizeSm,
               Icons.schedule,
               color: Colors.white,
             ),
@@ -241,7 +241,7 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
               plPlayerController: plPlayerController,
             ),
             icon: const Icon(
-              size: 18,
+              size: PlayerTokens.iconSizeSm,
               Icons.info_outline,
               color: Colors.white,
             ),

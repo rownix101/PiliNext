@@ -1,6 +1,8 @@
 import 'package:PiliNext/common/animation/animation.dart';
 import 'package:PiliNext/common/design/design_tokens.dart';
+import 'package:PiliNext/common/widgets/player_glass_surface.dart';
 import 'package:PiliNext/common/widgets/view_safe_area.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Animates player control bars in and out.
@@ -117,7 +119,7 @@ class PlayerControlSurface extends StatelessWidget {
   const PlayerControlSurface({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    this.padding = PlayerTokens.controlSurfacePadding,
   });
 
   final Widget child;
@@ -125,25 +127,17 @@ class PlayerControlSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.of(context);
-    const borderRadius = BorderRadius.all(Radius.circular(20));
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: GlassTokens.blurFilter(
-        sigma: GlassTokens.blurFloating,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.34),
-            borderRadius: borderRadius,
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.08),
-            ),
-          ),
-          child: Padding(
-            padding: padding,
-            child: child,
-          ),
-        ),
+    return PlayerGlassSurface(
+      sigma: GlassTokens.blurFloating,
+      backgroundColor: PlayerTokens.surfaceFill,
+      borderRadius: PlayerTokens.controlSurfaceRadius,
+      interactive: true,
+      border: Border.all(
+        color: ColorScheme.of(context).outlineVariant.withValues(alpha: 0.08),
+      ),
+      child: Padding(
+        padding: padding,
+        child: child,
       ),
     );
   }
@@ -179,99 +173,6 @@ class PlayerOverlayScrim extends StatelessWidget {
               stops: const [0.0, 0.28, 0.58, 1.0],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A player button with short tactile feedback on press.
-class BouncePlayerButton extends StatefulWidget {
-  const BouncePlayerButton({
-    super.key,
-    required this.icon,
-    this.size = 40,
-    this.onTap,
-    this.tooltip,
-    this.color,
-  });
-
-  final Widget icon;
-  final double size;
-  final VoidCallback? onTap;
-  final String? tooltip;
-  final Color? color;
-
-  @override
-  State<BouncePlayerButton> createState() => _BouncePlayerButtonState();
-}
-
-class _BouncePlayerButtonState extends State<BouncePlayerButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _bounceController;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _bounceController = AnimationController(
-      vsync: this,
-      duration: FluidTokens.durationSm,
-      value: 1.0,
-    );
-    _scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: FluidTokens.pressScale,
-        ).chain(CurveTween(curve: FluidTokens.curveExit)),
-        weight: 0.35,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: FluidTokens.pressScale,
-          end: 1.0,
-        ).chain(CurveTween(curve: FluidTokens.curveEnter)),
-        weight: 0.65,
-      ),
-    ]).animate(_bounceController);
-  }
-
-  void _handleTap() {
-    if (!FluidTokens.reduceMotionOf(context)) {
-      _bounceController
-        ..reset()
-        ..forward();
-    }
-    widget.onTap?.call();
-  }
-
-  @override
-  void dispose() {
-    _bounceController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnim,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnim.value,
-          child: child,
-        );
-      },
-      child: SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: IconButton(
-          onPressed: _handleTap,
-          icon: widget.icon,
-          iconSize: widget.size * 0.55,
-          color: widget.color,
-          tooltip: widget.tooltip,
-          splashRadius: widget.size * 0.5,
         ),
       ),
     );

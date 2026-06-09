@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:PiliNext/common/animation/fluid_tokens.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -51,8 +52,8 @@ class PlayOrPauseButtonState extends State<PlayOrPauseButton>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 42,
-      height: 34,
+      width: PlayerTokens.buttonSize,
+      height: PlayerTokens.buttonSize,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.plPlayerController.onDoubleTapCenter,
@@ -62,7 +63,7 @@ class PlayOrPauseButtonState extends State<PlayOrPauseButton>
             progress: controller,
             icon: AnimatedIcons.play_pause,
             color: Colors.white,
-            size: 20,
+            size: PlayerTokens.iconSize,
           ),
         ),
       ),

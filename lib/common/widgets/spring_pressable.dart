@@ -39,6 +39,7 @@ class _SpringPressableState extends State<SpringPressable>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scale;
+  double _lastValue = 0;
 
   @override
   void initState() {
@@ -50,6 +51,9 @@ class _SpringPressableState extends State<SpringPressable>
     _scale = Tween<double>(begin: 1.0, end: widget.scaleAmount).animate(
       CurvedAnimation(parent: _controller, curve: FluidTokens.curveEnter),
     );
+    _controller.addListener(() {
+      _lastValue = _controller.value;
+    });
   }
 
   @override
@@ -61,19 +65,33 @@ class _SpringPressableState extends State<SpringPressable>
   void _onTapDown(TapDownDetails details) {
     if (!widget.enabled) return;
     if (FluidTokens.reduceMotionOf(context)) return;
+    // Press-down stays fixed-duration for immediate feedback.
     _controller.forward();
   }
 
   void _onTapUp(TapUpDetails details) {
     if (!widget.enabled) return;
     if (FluidTokens.reduceMotionOf(context)) return;
-    _controller.reverse();
+    _springRelease();
   }
 
   void _onTapCancel() {
     if (!widget.enabled) return;
     if (FluidTokens.reduceMotionOf(context)) return;
-    _controller.reverse();
+    _springRelease();
+  }
+
+  /// Release with spring physics — inherits current velocity for fluid motion
+  /// when taps are rapid or interrupted.
+  void _springRelease() {
+    _controller.animateWith(
+      FluidTokens.simulation(
+        spring: FluidTokens.springSnappy,
+        from: _lastValue,
+        to: 0.0,
+        velocity: 0,
+      ),
+    );
   }
 
   void _handleTap() {

@@ -2,14 +2,14 @@ import 'package:PiliNext/utils/extension/iterable_ext.dart';
 import 'package:PiliNext/utils/extension/string_ext.dart';
 
 class VideoShotData {
-  String? pvdata;
-  int imgXLen;
-  int imgYLen;
-  double imgXSize;
-  double imgYSize;
+  final String? pvdata;
+  final int imgXLen;
+  final int imgYLen;
+  final double imgXSize;
+  final double imgYSize;
   late final int totalPerImage = imgXLen * imgYLen;
-  List<String> image;
-  List<int> index;
+  final List<String> image;
+  final List<int> index;
 
   VideoShotData({
     this.pvdata,

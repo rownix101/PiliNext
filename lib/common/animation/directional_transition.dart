@@ -177,10 +177,15 @@ class _DirectionalPageRoute<T> extends PageRoute<T> {
     );
 
     final beginOffset = _offsetForDirection(direction);
+    // Exit uses a smaller offset — user already knows where they came from.
+    final exitOffset = _exitOffsetForDirection(direction);
+
+    final isForward = animation.status == AnimationStatus.forward ||
+        animation.status == AnimationStatus.completed;
 
     return SlideTransition(
       position: Tween<Offset>(
-        begin: beginOffset,
+        begin: isForward ? beginOffset : exitOffset,
         end: Offset.zero,
       ).animate(curvedAnimation),
       child: FadeTransition(
@@ -209,6 +214,22 @@ class _DirectionalPageRoute<T> extends PageRoute<T> {
         return const Offset(0.0, 0.04);
       case TransitionDirection.fromTop:
         return const Offset(0.0, -0.04);
+      case TransitionDirection.fade:
+        return Offset.zero;
+    }
+  }
+
+  /// Exit offsets are smaller — the user already knows the spatial relationship.
+  static Offset _exitOffsetForDirection(TransitionDirection direction) {
+    switch (direction) {
+      case TransitionDirection.fromRight:
+        return const Offset(0.025, 0.0);
+      case TransitionDirection.fromLeft:
+        return const Offset(-0.025, 0.0);
+      case TransitionDirection.fromBottom:
+        return const Offset(0.0, 0.025);
+      case TransitionDirection.fromTop:
+        return const Offset(0.0, -0.025);
       case TransitionDirection.fade:
         return Offset.zero;
     }

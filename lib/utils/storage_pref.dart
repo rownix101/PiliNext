@@ -26,6 +26,8 @@ import 'package:PiliNext/models/common/video/subtitle_pref_type.dart';
 import 'package:PiliNext/models/common/video/video_decode_type.dart';
 import 'package:PiliNext/models/common/video/video_quality.dart';
 import 'package:PiliNext/models/user/danmaku_rule.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart'
+    show PlayerGlassStyle;
 import 'package:PiliNext/models/user/info.dart';
 import 'package:PiliNext/pages/setting/pages/fullscreen_sc_size.dart'
     show kFullScreenSCWidth;
@@ -507,6 +509,11 @@ abstract final class Pref {
 
   static bool get showDmChart =>
       _setting.get(SettingBoxKey.showDmChart, defaultValue: false);
+
+  static int get playerGlassStyle => _setting.get(
+    SettingBoxKey.playerGlassStyle,
+    defaultValue: PlayerGlassStyle.liquidGlass.index,
+  );
 
   static bool get enableCommAntifraud =>
       _setting.get(SettingBoxKey.enableCommAntifraud, defaultValue: false);

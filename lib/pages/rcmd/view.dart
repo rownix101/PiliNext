@@ -1,3 +1,4 @@
+import 'package:PiliNext/common/animation/animated_list_item.dart';
 import 'package:PiliNext/common/skeleton/video_card_v.dart';
 import 'package:PiliNext/common/style.dart';
 import 'package:PiliNext/common/widgets/flutter/refresh_indicator.dart';
@@ -20,6 +21,10 @@ class RcmdPage extends StatefulWidget {
 class _RcmdPageState extends State<RcmdPage>
     with AutomaticKeepAliveClientMixin {
   final RcmdController controller = Get.put(RcmdController());
+
+  /// Tracks whether this is the first successful data load — stagger is
+  /// only applied on first appearance, not on load-more or refresh.
+  bool _hasAnimatedOnce = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -62,6 +67,12 @@ class _RcmdPageState extends State<RcmdPage>
     ColorScheme colorScheme,
     LoadingState<List<dynamic>?> loadingState,
   ) {
+    // Mark first stagger as done once we have data.
+    if (loadingState is Success && !_hasAnimatedOnce) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _hasAnimatedOnce = true;
+      });
+    }
     return switch (loadingState) {
       Loading() => _buildSkeleton,
       Success(:final response) =>
@@ -72,9 +83,10 @@ class _RcmdPageState extends State<RcmdPage>
                   if (index == response.length - 1) {
                     controller.onLoadMore();
                   }
+                  Widget card;
                   if (controller.lastRefreshAt != null) {
                     if (controller.lastRefreshAt == index) {
-                      return GestureDetector(
+                      card = GestureDetector(
                         onTap: () => controller
                           ..animateToTop()
                           ..onRefresh(),
@@ -92,31 +104,38 @@ class _RcmdPageState extends State<RcmdPage>
                           ),
                         ),
                       );
+                    } else {
+                      final actualIndex = index > controller.lastRefreshAt!
+                          ? index - 1
+                          : index;
+                      card = VideoCardV(
+                        videoItem: response[actualIndex],
+                        onRemove: () {
+                          if (controller.lastRefreshAt != null &&
+                              actualIndex < controller.lastRefreshAt!) {
+                            controller.lastRefreshAt =
+                                controller.lastRefreshAt! - 1;
+                          }
+                          controller.loadingState
+                            ..value.data!.removeAt(actualIndex)
+                            ..refresh();
+                        },
+                      );
                     }
-                    final actualIndex = index > controller.lastRefreshAt!
-                        ? index - 1
-                        : index;
-                    return VideoCardV(
-                      videoItem: response[actualIndex],
-                      onRemove: () {
-                        if (controller.lastRefreshAt != null &&
-                            actualIndex < controller.lastRefreshAt!) {
-                          controller.lastRefreshAt =
-                              controller.lastRefreshAt! - 1;
-                        }
-                        controller.loadingState
-                          ..value.data!.removeAt(actualIndex)
-                          ..refresh();
-                      },
-                    );
                   } else {
-                    return VideoCardV(
+                    card = VideoCardV(
                       videoItem: response[index],
                       onRemove: () => controller.loadingState
                         ..value.data!.removeAt(index)
                         ..refresh(),
                     );
                   }
+
+                  // Only stagger on first data appearance.
+                  if (!_hasAnimatedOnce) {
+                    return AnimatedListItem(index: index, child: card);
+                  }
+                  return card;
                 },
                 itemCount: controller.lastRefreshAt != null
                     ? response.length + 1

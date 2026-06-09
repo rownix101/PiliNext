@@ -2,6 +2,7 @@ import 'package:PiliNext/common/widgets/progress_bar/animated_progress_bar.dart'
 import 'package:PiliNext/common/widgets/progress_bar/segment_progress_bar.dart';
 import 'package:PiliNext/pages/video/controller.dart';
 import 'package:PiliNext/plugin/pl_player/controller.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:PiliNext/plugin/pl_player/view/view.dart';
 import 'package:PiliNext/utils/extension/theme_ext.dart';
 import 'package:PiliNext/utils/feed_back.dart';
@@ -101,7 +102,7 @@ class BottomControl extends StatelessWidget {
                       Positioned(
                         left: 0,
                         right: 0,
-                        bottom: 5.25,
+                        bottom: PlayerTokens.segmentBarBottom,
                         child: SegmentProgressBar(
                           segments: videoDetailController.segmentProgressList,
                         ),
@@ -110,7 +111,9 @@ class BottomControl extends StatelessWidget {
                         videoDetailController.viewPointList.isNotEmpty &&
                         videoDetailController.showVP.value)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 8.75),
+                        padding: const EdgeInsets.only(
+                          bottom: PlayerTokens.viewPointBarBottom,
+                        ),
                         child: ViewPointSegmentProgressBar(
                           segments: videoDetailController.viewPointList,
                           onSeek: PlatformUtils.isDesktop

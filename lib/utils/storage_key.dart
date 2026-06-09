@@ -233,7 +233,8 @@ abstract final class SettingBoxKey {
       tempPlayerConf = 'tempPlayerConf',
       reduceLuxColor = 'reduceLuxColor',
       liveCdnUrl = 'liveCdnUrl',
-      saveReply = 'saveReply';
+      saveReply = 'saveReply',
+      playerGlassStyle = 'playerGlassStyle';
 }
 
 abstract final class LocalCacheKey {

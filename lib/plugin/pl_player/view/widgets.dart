@@ -58,7 +58,7 @@ class _PlaybackSpeedMenuEntryState extends State<PlaybackSpeedMenuEntry> {
       container: true,
       label: '播放速度调节',
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        padding: PlayerTokens.speedPanelPadding,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -68,11 +68,7 @@ class _PlaybackSpeedMenuEntryState extends State<PlaybackSpeedMenuEntry> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '播放速度',
-                  style: TextStyle(
-                    color: Color(0xB3FFFFFF),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: PlayerTokens.speedHeading,
                 ),
               ),
             ),
@@ -81,11 +77,7 @@ class _PlaybackSpeedMenuEntryState extends State<PlaybackSpeedMenuEntry> {
               child: Center(
                 child: Text(
                   '${_speed.toStringAsFixed(2)}x',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: PlayerTokens.speedValueText,
                 ),
               ),
             ),
@@ -173,14 +165,8 @@ class _PlaybackSpeedMenuEntryState extends State<PlaybackSpeedMenuEntry> {
                                         ? '正常'
                                         : '${_PLVideoPlayerState._formatPlaybackSpeed(speed)}x',
                                     maxLines: 1,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: isSelected ? 1 : 0.78,
-                                      ),
-                                      fontSize: 12,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.w500,
+                                    style: PlayerTokens.speedPresetLabel(
+                                      isSelected,
                                     ),
                                   ),
                                 ),
@@ -283,14 +269,19 @@ Widget buildDmChart(
   );
 }
 
-// 进度条高度 + 少量间距（适配膨胀态 expandedThumbRadius=10）
-const _kProgressBarOffset = 16.0;
+// Offsets seek preview above the progress bar (accounts for expanded thumb).
+const _kProgressBarOffset = PlayerTokens.seekPreviewOffset;
+
+/// Loading placeholder height for preview skeleton.
+const _kPreviewSkeletonHeight = 54.0;
 
 Widget buildSeekPreviewWidget(
   PlPlayerController plPlayerController,
   double maxWidth,
   double maxHeight,
   ValueGetter<bool> isMounted,
+  String bvid,
+  int? cid,
 ) {
   return Obx(() {
     if (!plPlayerController.showPreview.value) {
@@ -298,7 +289,28 @@ Widget buildSeekPreviewWidget(
     }
 
     try {
-      final data = plPlayerController.videoShot!.data;
+      final shot = plPlayerController.videoShot;
+      if (shot == null) {
+        return const SizedBox.shrink();
+      }
+
+      final data = switch (shot) {
+        Success(:final response) => response,
+        _ => null,
+      };
+
+      // Show loading skeleton while data is being fetched
+      if (data == null) {
+        final ratio = plPlayerController.previewRatio.value;
+        const skeletonWidth = _kPreviewSkeletonHeight * 16 / 9;
+        final rawLeft = ratio * maxWidth - skeletonWidth / 2;
+        final left = rawLeft.clamp(8.0, maxWidth - skeletonWidth - 8);
+        return Positioned(
+          left: left,
+          bottom: _kProgressBarOffset,
+          child: const _PreviewLoadingSkeleton(width: skeletonWidth),
+        );
+      }
 
       final double scale =
           plPlayerController.isFullScreen.value &&
@@ -314,8 +326,10 @@ Widget buildSeekPreviewWidget(
       final int imgXLen = data.imgXLen;
       final int imgYLen = data.imgYLen;
       final int totalPerImage = data.totalPerImage;
-      double imgXSize = data.imgXSize;
-      double imgYSize = data.imgYSize;
+      double imgXSize = plPlayerController.previewCellWidth.value;
+      double imgYSize = plPlayerController.previewCellHeight.value;
+      if (imgXSize == 0) imgXSize = data.imgXSize;
+      if (imgYSize == 0) imgYSize = data.imgYSize;
 
       return Obx(() {
         final index = plPlayerController.previewIndex.value;
@@ -331,17 +345,14 @@ Widget buildSeekPreviewWidget(
         final int y = align ~/ imgYLen;
         final url = data.image[pageIndex];
 
-        // 预览图宽度（先用高度比估算，VideoShotImage 加载后会更新 imgXSize）
         final thumbWidth = imgXSize > 0
             ? thumbHeight * imgXSize / imgYSize
             : thumbHeight * 16 / 9;
 
-        // 水平位置：跟随拖动比例，夹紧边缘
         final halfW = thumbWidth / 2;
         final rawLeft = ratio * maxWidth - halfW;
         final left = rawLeft.clamp(8.0, maxWidth - thumbWidth - 8);
 
-        // 时间戳
         final totalMs = plPlayerController.duration.value.inMilliseconds;
         final posMs = (ratio * totalMs).round();
         final timeStr = DurationUtils.formatDuration(posMs ~/ 1000);
@@ -371,15 +382,18 @@ Widget buildSeekPreviewWidget(
                     ),
                     child: VideoShotImage(
                       url: url,
+                      cacheKey: '${bvid}_${cid ?? 0}',
                       x: x,
                       y: y,
                       imgXSize: imgXSize,
                       imgYSize: imgYSize,
                       height: thumbHeight,
                       imageCache: plPlayerController.previewCache,
-                      onSetSize: (xSize, ySize) => data
-                        ..imgXSize = imgXSize = xSize
-                        ..imgYSize = imgYSize = ySize,
+                      onSetSize: (xSize, ySize) {
+                        plPlayerController.previewCellWidth.value = xSize;
+                        plPlayerController.previewCellHeight.value = ySize;
+                      },
+                      onImageCached: plPlayerController.evictLruPreviewCache,
                       isMounted: isMounted,
                     ),
                   ),
@@ -387,23 +401,49 @@ Widget buildSeekPreviewWidget(
                 const SizedBox(height: 4),
                 Text(
                   timeStr,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-                  ),
+                  style: PlayerTokens.seekPreviewTime,
                 ),
               ],
             ),
           ),
         );
       });
-    } catch (e) {
-      if (kDebugMode) rethrow;
+    } catch (e, st) {
+      debugPrint('[Preview] Error building seek preview: $e\n$st');
       return const SizedBox.shrink();
     }
   });
+}
+
+class _PreviewLoadingSkeleton extends StatelessWidget {
+  const _PreviewLoadingSkeleton({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: Style.mdRadius,
+      child: Container(
+        width: width,
+        height: _kPreviewSkeletonHeight,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: Style.mdRadius,
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white38,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class VideoShotImage extends StatefulWidget {
@@ -411,31 +451,35 @@ class VideoShotImage extends StatefulWidget {
     super.key,
     required this.imageCache,
     required this.url,
+    required this.cacheKey,
     required this.x,
     required this.y,
     required this.imgXSize,
     required this.imgYSize,
     required this.height,
     required this.onSetSize,
+    required this.onImageCached,
     required this.isMounted,
   });
 
   final Map<String, ui.Image?> imageCache;
   final String url;
+  final String cacheKey;
   final int x;
   final int y;
   final double imgXSize;
   final double imgYSize;
   final double height;
   final Function(double imgXSize, double imgYSize) onSetSize;
+  final VoidCallback onImageCached;
   final ValueGetter<bool> isMounted;
 
   @override
   State<VideoShotImage> createState() => _VideoShotImageState();
 }
 
-Future<ui.Image?> _getImg(String url) async {
-  final cacheKey = Utils.getFileName(url, fileExt: false);
+Future<ui.Image?> _getImg(String url, String prefix) async {
+  final cacheKey = '${prefix}_${Utils.getFileName(url, fileExt: false)}';
   try {
     final fileInfo = await CacheManager.manager.getSingleFile(
       ImageUtils.safeThumbnailUrl(url),
@@ -521,10 +565,11 @@ class _VideoShotImageState extends State<VideoShotImage> {
       _initSizeIfNeeded();
     } else if (!widget.imageCache.containsKey(url)) {
       widget.imageCache[url] = null;
-      _getImg(url).then((image) {
+      _getImg(url, widget.cacheKey).then((image) {
         if (image != null) {
           if (widget.isMounted()) {
             widget.imageCache[url] = image;
+            widget.onImageCached();
           }
           if (mounted) {
             _image = image;
@@ -549,7 +594,7 @@ class _VideoShotImageState extends State<VideoShotImage> {
     }
   }
 
-  late final _imgPaint = Paint()..filterQuality = FilterQuality.medium;
+  late final _imgPaint = Paint()..filterQuality = FilterQuality.high;
   late final _borderPaint = Paint()
     ..color = Colors.white
     ..style = PaintingStyle.stroke

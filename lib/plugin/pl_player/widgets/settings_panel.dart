@@ -1,6 +1,6 @@
-import 'dart:ui' as ui;
-
 import 'package:PiliNext/common/animation/fluid_tokens.dart';
+import 'package:PiliNext/common/widgets/player_glass_surface.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// YouTube-style settings panel that slides in from the right edge of the
@@ -145,7 +145,10 @@ class _GlassPanelState extends State<GlassSettingsPanel>
     final size = widget.playerSize;
 
     // Panel width: 300 or 85% of player width, whichever is smaller.
-    final panelW = (size.width * 0.85).clamp(180.0, 300.0);
+    final panelW = (size.width * 0.85).clamp(
+      PlayerTokens.settingsPanelMinWidth,
+      PlayerTokens.settingsPanelMaxWidth,
+    );
 
     final nav = SettingsPanelNavController(_push, _pop);
     final currentPage = _stack.last(nav);
@@ -188,46 +191,39 @@ class _GlassPanelState extends State<GlassSettingsPanel>
                       }
                     }
                   },
-                  child: ClipRect(
-                    child: BackdropFilter(
-                      filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          // Deep frosted glass — consistent with PlayerControlSurface
-                          color: Colors.black.withValues(alpha: 0.72),
-                          border: Border(
-                            left: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.08),
-                            ),
+                  child: PlayerGlassSurface(
+                    sigma: 16,
+                    backgroundColor: Colors.black.withValues(alpha: 0.34),
+                    thickness: 1.7,
+                    border: Border(
+                      left: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.14),
+                      ),
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: FluidTokens.durationMd,
+                      switchInCurve: FluidTokens.curveEnter,
+                      switchOutCurve: FluidTokens.curveExit,
+                      transitionBuilder: (child, anim) {
+                        final isEntering = child.key == ValueKey(_stack.length);
+                        final dx = _isForward
+                            ? (isEntering ? 1.0 : -1.0)
+                            : (isEntering ? -1.0 : 1.0);
+                        final slideAnim = Tween<Offset>(
+                          begin: Offset(dx, 0),
+                          end: Offset.zero,
+                        ).animate(anim);
+                        return SlideTransition(
+                          position: slideAnim,
+                          child: FadeTransition(
+                            opacity: anim,
+                            child: child,
                           ),
-                        ),
-                        child: AnimatedSwitcher(
-                          duration: FluidTokens.durationMd,
-                          switchInCurve: FluidTokens.curveEnter,
-                          switchOutCurve: FluidTokens.curveExit,
-                          transitionBuilder: (child, anim) {
-                            final isEntering =
-                                child.key == ValueKey(_stack.length);
-                            final dx = _isForward
-                                ? (isEntering ? 1.0 : -1.0)
-                                : (isEntering ? -1.0 : 1.0);
-                            final slideAnim = Tween<Offset>(
-                              begin: Offset(dx, 0),
-                              end: Offset.zero,
-                            ).animate(anim);
-                            return SlideTransition(
-                              position: slideAnim,
-                              child: FadeTransition(
-                                opacity: anim,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: KeyedSubtree(
-                            key: ValueKey(_stack.length),
-                            child: currentPage,
-                          ),
-                        ),
+                        );
+                      },
+                      child: KeyedSubtree(
+                        key: ValueKey(_stack.length),
+                        child: currentPage,
                       ),
                     ),
                   ),
@@ -264,11 +260,7 @@ class _SettingsRootPage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 20, 8, 8),
           child: Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
+            style: PlayerTokens.settingsTitle,
           ),
         ),
         const Divider(color: Color(0x1AFFFFFF), height: 1),
@@ -323,11 +315,7 @@ class _SettingsSubPage<T> extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: PlayerTokens.settingsTitle,
               ),
             ),
           ],
@@ -381,7 +369,7 @@ class _SelectableTile extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.white70,
-                  fontSize: 14,
+                  fontSize: PlayerTokens.settingsTileLabel.fontSize,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
@@ -589,19 +577,13 @@ class _SettingsTileRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
+                    style: PlayerTokens.settingsTileLabel,
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontSize: 12,
-                      ),
+                      style: PlayerTokens.settingsSubtitle,
                     ),
                   ],
                 ],
@@ -617,10 +599,7 @@ class _SettingsTileRow extends StatelessWidget {
                   if (trailing != null)
                     Text(
                       trailing!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontSize: 13,
-                      ),
+                      style: PlayerTokens.settingsTileTrailing,
                     ),
                   if (hasArrow) ...[
                     const SizedBox(width: 4),
@@ -674,11 +653,7 @@ class SettingsSubPageScaffold extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: PlayerTokens.settingsTitle,
               ),
             ),
           ],

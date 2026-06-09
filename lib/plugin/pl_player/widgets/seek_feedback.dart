@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:PiliNext/common/animation/animation.dart';
+import 'package:PiliNext/plugin/pl_player/player_tokens.dart';
 import 'package:flutter/material.dart';
 
 class SeekFeedback extends StatelessWidget {
@@ -94,21 +95,10 @@ class SeekFeedback extends StatelessWidget {
                             const SizedBox(height: 10),
                             Transform.scale(
                               scale: reduceMotion ? 1.0 : 0.92 + value * 0.08,
-                              child: Text(
-                                '$sign${duration.inSeconds}s',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.4,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black54,
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                        child: Text(
+                          '$sign${duration.inSeconds}s',
+                          style: PlayerTokens.seekFeedbackText,
+                        ),
                             ),
                           ],
                         ),

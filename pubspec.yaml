@@ -273,6 +273,9 @@ flutter_native_splash:
 flutter:
   uses-material-design: true
 
+  shaders:
+    - assets/ui_shaders/liquid_glass.frag
+
   assets:
     - path: assets/images/
     - path: assets/images/lv/
